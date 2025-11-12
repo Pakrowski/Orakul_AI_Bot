@@ -6,9 +6,10 @@
 }
 
 body {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #000000;
   min-height: 100vh;
   padding: 20px;
+  color: #ffffff;
 }
 
 .container {
@@ -19,68 +20,79 @@ body {
 /* Header */
 .header {
   text-align: center;
-  color: white;
   margin-bottom: 30px;
+  padding: 20px 0;
+  border-bottom: 1px solid #333;
 }
 
 .header h1 {
-  font-size: 24px;
-  margin-bottom: 5px;
+  font-size: 28px;
+  margin-bottom: 8px;
+  font-weight: 300;
+  letter-spacing: 2px;
 }
 
 .header p {
-  opacity: 0.9;
+  opacity: 0.7;
   font-size: 14px;
+  font-weight: 300;
 }
 
 /* Cards */
 .card {
-  background: white;
-  border-radius: 20px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  background: #111111;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  border-color: #666;
 }
 
 .section-title {
   font-size: 18px;
   font-weight: 600;
-  margin-bottom: 15px;
-  color: #333;
+  margin-bottom: 20px;
+  color: #ffffff;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 /* Balance */
 .balance {
   text-align: center;
-  padding: 15px;
+  padding: 20px;
 }
 
 .balance-amount {
-  font-size: 36px;
-  font-weight: bold;
-  color: #667eea;
-  margin: 10px 0;
+  font-size: 42px;
+  font-weight: 300;
+  margin: 15px 0;
+  color: #ffffff;
+  letter-spacing: 1px;
 }
 
 .balance-label {
-  color: #666;
+  color: #888;
   font-size: 14px;
+  font-weight: 300;
 }
 
 /* Buttons */
 .btn {
   width: 100%;
-  padding: 15px;
+  padding: 16px;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -88,114 +100,127 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #333;
 }
 
 .btn-secondary {
-  background: #f8f9fa;
-  color: #333;
-  border: 2px solid #e9ecef;
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid #333;
 }
 
 .btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  background: #333;
+  color: #ffffff;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Subscription */
 .subscription-info {
   text-align: center;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
 .subscription-status {
-  color: #666;
-  margin-bottom: 10px;
+  color: #888;
+  margin-bottom: 15px;
+  font-size: 14px;
 }
 
 /* Packages */
 .package {
-  border: 2px solid #e9ecef;
-  border-radius: 12px;
-  padding: 15px;
-  margin-bottom: 10px;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 18px;
+  margin-bottom: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .package:hover {
-  border-color: #667eea;
-  background: #f8f9ff;
+  border-color: #666;
+  background: #1a1a1a;
 }
 
 .package.selected {
-  border-color: #667eea;
-  background: #f0f4ff;
+  border-color: #ffffff;
+  background: #1a1a1a;
 }
 
 .package-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .package-name {
-  font-weight: 600;
-  color: #333;
+  font-weight: 500;
+  color: #ffffff;
 }
 
 .package-price {
-  font-weight: bold;
-  color: #667eea;
+  font-weight: 600;
+  color: #ffffff;
 }
 
 .package-desc {
   font-size: 12px;
-  color: #666;
+  color: #888;
 }
 
 /* Premium Features */
 .premium-features {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
 .feature-list {
-  color: #666;
-  margin-bottom: 10px;
-  line-height: 1.5;
+  color: #888;
+  margin-bottom: 15px;
+  line-height: 1.6;
+  font-size: 14px;
 }
 
 .premium-price {
-  font-weight: bold;
+  font-weight: 600;
   text-align: center;
-  margin: 15px 0;
-  font-size: 18px;
+  margin: 20px 0;
+  font-size: 20px;
+  color: #ffffff;
 }
 
 /* Tabs */
 .tab-container {
   display: flex;
-  background: #f8f9fa;
-  border-radius: 12px;
-  padding: 5px;
-  margin-bottom: 20px;
+  background: #111;
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 24px;
+  border: 1px solid #333;
+  flex-wrap: wrap;
 }
 
 .tab {
   flex: 1;
-  padding: 10px;
+  padding: 12px 6px;
   text-align: center;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: 500;
+  font-size: 11px;
+  min-width: 60px;
 }
 
 .tab.active {
-  background: white;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  color: #000000;
 }
 
 .tab-content {
@@ -211,8 +236,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 0;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 0;
+  border-bottom: 1px solid #333;
 }
 
 .setting:last-child {
@@ -225,13 +250,13 @@ body {
 
 .setting-title {
   font-weight: 500;
-  color: #333;
-  margin-bottom: 5px;
+  color: #ffffff;
+  margin-bottom: 4px;
 }
 
 .setting-desc {
   font-size: 12px;
-  color: #666;
+  color: #888;
 }
 
 /* Switch */
@@ -255,7 +280,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #ccc;
+  background-color: #333;
   transition: .4s;
   border-radius: 24px;
 }
@@ -267,66 +292,220 @@ body {
   width: 16px;
   left: 4px;
   bottom: 4px;
-  background-color: white;
+  background-color: #000000;
   transition: .4s;
   border-radius: 50%;
 }
 
 input:checked+.slider {
-  background-color: #667eea;
+  background-color: #ffffff;
 }
 
 input:checked+.slider:before {
   transform: translateX(26px);
+  background-color: #000000;
 }
 
 /* Time Select */
 .time-select {
   padding: 8px 12px;
   border-radius: 6px;
-  border: 1px solid #ddd;
-  background: white;
+  border: 1px solid #333;
+  background: #000000;
   font-size: 14px;
+  color: #ffffff;
 }
 
 /* Empty State */
 .empty-state {
   text-align: center;
-  color: #666;
-  padding: 20px;
+  color: #888;
+  padding: 40px 20px;
+  font-style: italic;
 }
 
 /* Legal */
-.legal-text {
+.legal-tabs {
+  display: flex;
+  gap: 8px;
   margin-bottom: 20px;
 }
 
-.legal-text p {
-  color: #666;
-  margin-bottom: 15px;
-  line-height: 1.5;
+.legal-tab {
+  flex: 1;
+  padding: 12px 8px;
+  text-align: center;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 12px;
+  min-width: 0;
+  word-break: break-word;
 }
 
-.legal-links {
-  display: flex;
-  gap: 10px;
+.legal-tab.active {
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+}
+
+.legal-content {
+  display: none;
+  background: #1a1a1a;
+  padding: 20px;
+  border-radius: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #333;
+}
+
+.legal-content.active {
+  display: block;
+}
+
+.legal-section {
+  margin-bottom: 25px;
+}
+
+.legal-section h3 {
+  color: #ffffff;
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.legal-section p {
+  color: #888;
+  line-height: 1.6;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.legal-list {
+  color: #888;
+  padding-left: 20px;
   margin-bottom: 15px;
+}
+
+.legal-list li {
+  margin-bottom: 8px;
+  line-height: 1.5;
+  font-size: 14px;
 }
 
 .legal-link {
-  flex: 1;
+  display: block;
   text-align: center;
-  padding: 12px;
-  background: #f8f9fa;
+  padding: 15px;
+  background: #1a1a1a;
   border-radius: 8px;
-  color: #667eea;
+  color: #ffffff;
   text-decoration: none;
-  font-size: 14px;
+  margin: 20px 0;
+  border: 1px solid #333;
   transition: all 0.3s ease;
+  font-size: 14px;
 }
 
 .legal-link:hover {
-  background: #e9ecef;
+  background: #333;
+  border-color: #666;
+}
+
+/* Referral System */
+.referral-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.stat-item {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #888;
+}
+
+.referral-info {
+  background: #1a1a1a;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #333;
+}
+
+.referral-info p {
+  margin-bottom: 10px;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.referral-link-card {
+  margin-bottom: 20px;
+}
+
+.referral-link {
+  background: #1a1a1a;
+  padding: 15px;
+  border-radius: 10px;
+  border: 2px dashed #333;
+  margin-bottom: 15px;
+  word-break: break-all;
+  font-size: 14px;
+  color: #ffffff;
+  text-align: center;
+}
+
+.referral-instructions {
+  background: #1a1a1a;
+  padding: 15px;
+  border-radius: 10px;
+  border: 1px solid #333;
+}
+
+.referral-instructions h4 {
+  margin-bottom: 10px;
+  color: #ffffff;
+}
+
+.referral-instructions ol {
+  padding-left: 20px;
+  color: #888;
+}
+
+.referral-instructions li {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+/* Admin Link */
+.admin-link {
+  display: block;
+  text-align: center;
+  padding: 16px;
+  background: #1a1a1a;
+  border-radius: 10px;
+  color: #ffffff;
+  text-decoration: none;
+  margin: 15px 0;
+  border: 1px solid #333;
+  transition: all 0.3s ease;
+}
+
+.admin-link:hover {
+  background: #333;
 }
 
 /* Responsive */
@@ -336,86 +515,30 @@ input:checked+.slider:before {
   }
 
   .card {
-    padding: 15px;
+    padding: 20px;
   }
 
   .tab {
-    padding: 8px;
-    font-size: 14px;
+    padding: 10px 4px;
+    font-size: 10px;
   }
 
-  .legal-links {
+  .legal-tabs {
     flex-direction: column;
-  }
-}
-
-/* Добавьте эти стили в конец файла */
-.subscription-info {
-  text-align: center;
-  margin-bottom: 15px;
-}
-
-.subscription-status {
-  color: #666;
-  margin-bottom: 10px;
-}
-
-.premium-features {
-  margin-bottom: 15px;
-}
-
-.feature-list {
-  color: #666;
-  margin-bottom: 10px;
-  line-height: 1.5;
-}
-
-.premium-price {
-  font-weight: bold;
-  text-align: center;
-  margin: 15px 0;
-  font-size: 18px;
-}
-
-.empty-state {
-  text-align: center;
-  color: #666;
-  padding: 20px;
-}
-
-.legal-text {
-  margin-bottom: 20px;
-}
-
-.legal-text p {
-  color: #666;
-  margin-bottom: 15px;
-  line-height: 1.5;
-}
-
-.time-select {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-  background: white;
-  font-size: 14px;
-}
-
-@media (max-width: 480px) {
-  .container {
-    padding: 10px;
+    gap: 6px;
   }
 
-  .card {
-    padding: 15px;
+  .legal-tab {
+    font-size: 11px;
+    padding: 10px 6px;
   }
 
-  .tab {
-    padding: 8px;
-    font-size: 14px;
-  }
-
-  .legal-links {
+  .referral-stats {
     flex-direction: column;
+    gap: 15px;
+  }
+
+  .balance-amount {
+    font-size: 36px;
   }
 }
