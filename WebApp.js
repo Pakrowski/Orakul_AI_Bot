@@ -38,17 +38,26 @@ function processPayment() {
 
 	const selected = packages[selectedPackage]
 
-	// Здесь будет интеграция с платежной системой
-	alert(
-		`Выбран пакет: ${selected.name}\nСумма: ${selected.price} ₽\n\nПеренаправление на страницу оплаты...`
-	)
+	// Интеграция с Telegram Payments
+	if (window.Telegram && Telegram.WebApp) {
+		const initData = Telegram.WebApp.initData
 
-	// Временная заглушка
+		// Здесь будет вызов Telegram Payments
+		alert(
+			`Выбран пакет: ${selected.name}\nСумма: ${selected.price} ₽\n\nПлатежная система настраивается...`
+		)
+	} else {
+		alert(
+			`Выбран пакет: ${selected.name}\nСумма: ${selected.price} ₽\n\nДля оплаты используйте Telegram.`
+		)
+	}
+
+	// Временная заглушка для демо
 	setTimeout(() => {
 		alert('Оплата успешно завершена! Сообщения добавлены на ваш баланс.')
 		document.getElementById('balanceAmount').textContent =
 			parseInt(document.getElementById('balanceAmount').textContent) +
-			selectedPackage * 5 // Простая логика начисления
+			selectedPackage * 5
 		switchTab('profile')
 	}, 2000)
 }
@@ -58,9 +67,18 @@ function subscribePremium() {
 	if (
 		confirm('Активировать подписку "Оракул ПРЕМИУМ" за 1 990 ₽ на 30 дней?')
 	) {
-		// Здесь будет интеграция с платежной системой
-		alert('Подписка успешно активирована!')
-		switchTab('profile')
+		// Интеграция с Telegram Payments
+		if (window.Telegram && Telegram.WebApp) {
+			alert('Подписка активируется через Telegram Payments...')
+		} else {
+			alert('Для активации подписки используйте Telegram.')
+		}
+
+		// Временная заглушка
+		setTimeout(() => {
+			alert('Подписка успешно активирована!')
+			switchTab('profile')
+		}, 2000)
 	}
 }
 
@@ -70,7 +88,18 @@ function saveSettings() {
 	const adviceEnabled = document.getElementById('adviceToggle').checked
 	const time = document.getElementById('timeSelect').value
 
-	// Здесь будет отправка на сервер
+	// Отправка данных в Telegram бот
+	if (window.Telegram && Telegram.WebApp) {
+		Telegram.WebApp.sendData(
+			JSON.stringify({
+				action: 'save_settings',
+				horoscope: horoscopeEnabled,
+				advice: adviceEnabled,
+				time: time,
+			})
+		)
+	}
+
 	alert(
 		'Настройки сохранены!\n\nГороскоп: ' +
 			(horoscopeEnabled ? 'включен' : 'выключен') +
@@ -98,7 +127,14 @@ if (window.Telegram && Telegram.WebApp) {
 	// Получение данных пользователя
 	const user = Telegram.WebApp.initDataUnsafe.user
 	if (user) {
+		console.log('User data:', user)
 		// Можно обновить интерфейс с данными пользователя
-		console.log('User:', user)
 	}
+
+	// Обработка данных от бота
+	Telegram.WebApp.onEvent('webAppData', function (data) {
+		console.log('Data from bot:', data)
+	})
+} else {
+	console.log('Telegram Web App not detected - running in browser mode')
 }
