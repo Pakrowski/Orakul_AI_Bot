@@ -1,6 +1,5 @@
 // Переключение табов
 function switchTab(tabName) {
-	// Скрыть все табы
 	document.querySelectorAll('.tab-content').forEach(tab => {
 		tab.classList.remove('active')
 	})
@@ -8,8 +7,25 @@ function switchTab(tabName) {
 		tab.classList.remove('active')
 	})
 
-	// Показать выбранный таб
 	document.getElementById(tabName).classList.add('active')
+	event.target.classList.add('active')
+
+	// Загружаем реферальные данные при переходе на вкладку
+	if (tabName === 'referral') {
+		loadReferralData()
+	}
+}
+
+// Переключение юридических вкладок
+function switchLegalTab(tabName) {
+	document.querySelectorAll('.legal-content').forEach(tab => {
+		tab.classList.remove('active')
+	})
+	document.querySelectorAll('.legal-tab').forEach(tab => {
+		tab.classList.remove('active')
+	})
+
+	document.getElementById(tabName + 'Content').classList.add('active')
 	event.target.classList.add('active')
 }
 
@@ -38,13 +54,9 @@ function processPayment() {
 
 	const selected = packages[selectedPackage]
 
-	// Интеграция с Telegram Payments
 	if (window.Telegram && Telegram.WebApp) {
-		const initData = Telegram.WebApp.initData
-
-		// Здесь будет вызов Telegram Payments
 		alert(
-			`Выбран пакет: ${selected.name}\nСумма: ${selected.price} ₽\n\nПлатежная система настраивается...`
+			`Выбран пакет: ${selected.name}\nСумма: ${selected.price} ₽\n\nПеренаправление на оплату...`
 		)
 	} else {
 		alert(
@@ -52,12 +64,16 @@ function processPayment() {
 		)
 	}
 
-	// Временная заглушка для демо
+	// Заглушка для демо
 	setTimeout(() => {
-		alert('Оплата успешно завершена! Сообщения добавлены на ваш баланс.')
-		document.getElementById('balanceAmount').textContent =
-			parseInt(document.getElementById('balanceAmount').textContent) +
-			selectedPackage * 5
+		alert('Оплата успешно завершена!')
+		const currentBalance = parseInt(
+			document.getElementById('balanceAmount').textContent
+		)
+		const newBalance =
+			currentBalance +
+			(selectedPackage === 1 ? 5 : selectedPackage === 2 ? 15 : 50)
+		document.getElementById('balanceAmount').textContent = newBalance
 		switchTab('profile')
 	}, 2000)
 }
@@ -65,20 +81,60 @@ function processPayment() {
 // Активация подписки
 function subscribePremium() {
 	if (
-		confirm('Активировать подписку "Оракул ПРЕМИУМ" за 1 990 ₽ на 30 дней?')
+		confirm('Активировать подписку "ОРАКУЛ ПРЕМИУМ" за 1 990 ₽ на 30 дней?')
 	) {
-		// Интеграция с Telegram Payments
 		if (window.Telegram && Telegram.WebApp) {
 			alert('Подписка активируется через Telegram Payments...')
 		} else {
 			alert('Для активации подписки используйте Telegram.')
 		}
 
-		// Временная заглушка
 		setTimeout(() => {
 			alert('Подписка успешно активирована!')
 			switchTab('profile')
 		}, 2000)
+	}
+}
+
+// Загрузка реферальных данных
+function loadReferralData() {
+	if (window.Telegram && Telegram.WebApp) {
+		const user = Telegram.WebApp.initDataUnsafe.user
+		if (user) {
+			// Генерируем реферальную ссылку
+			const referralLink = `https://t.me/your_bot_username?start=ref_${user.id}`
+			document.getElementById('referralLink').textContent = referralLink
+
+			// Здесь будет запрос к API для получения статистики
+			// Временные данные для демо
+			document.getElementById('referralsCount').textContent = '0'
+			document.getElementById('referralsEarned').textContent = '0'
+		}
+	} else {
+		document.getElementById('referralLink').textContent =
+			'Доступно только в Telegram'
+	}
+}
+
+// Копирование реферальной ссылки
+function copyReferralLink() {
+	const link = document.getElementById('referralLink').textContent
+	if (link !== 'Загрузка...' && link !== 'Доступно только в Telegram') {
+		navigator.clipboard
+			.writeText(link)
+			.then(() => {
+				alert('Ссылка скопирована в буфер обмена!')
+			})
+			.catch(() => {
+				// Fallback для старых браузеров
+				const textArea = document.createElement('textarea')
+				textArea.value = link
+				document.body.appendChild(textArea)
+				textArea.select()
+				document.execCommand('copy')
+				document.body.removeChild(textArea)
+				alert('Ссылка скопирована в буфер обмена!')
+			})
 	}
 }
 
@@ -88,7 +144,6 @@ function saveSettings() {
 	const adviceEnabled = document.getElementById('adviceToggle').checked
 	const time = document.getElementById('timeSelect').value
 
-	// Отправка данных в Telegram бот
 	if (window.Telegram && Telegram.WebApp) {
 		Telegram.WebApp.sendData(
 			JSON.stringify({
@@ -110,31 +165,15 @@ function saveSettings() {
 	)
 }
 
-// Закрытие Web App
-function closeWebApp() {
-	if (window.Telegram && Telegram.WebApp) {
-		Telegram.WebApp.close()
-	} else {
-		alert('Закройте окно вручную')
-	}
-}
-
 // Инициализация Telegram Web App
 if (window.Telegram && Telegram.WebApp) {
 	Telegram.WebApp.ready()
 	Telegram.WebApp.expand()
 
-	// Получение данных пользователя
 	const user = Telegram.WebApp.initDataUnsafe.user
 	if (user) {
 		console.log('User data:', user)
-		// Можно обновить интерфейс с данными пользователя
 	}
-
-	// Обработка данных от бота
-	Telegram.WebApp.onEvent('webAppData', function (data) {
-		console.log('Data from bot:', data)
-	})
 } else {
-	console.log('Telegram Web App not detected - running in browser mode')
+	console.log('Telegram Web App not detected')
 }
