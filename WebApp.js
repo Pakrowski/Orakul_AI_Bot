@@ -101,8 +101,9 @@ function loadReferralData() {
 	if (window.Telegram && Telegram.WebApp) {
 		const user = Telegram.WebApp.initDataUnsafe.user
 		if (user) {
-			// Генерируем реферальную ссылку
-			const referralLink = `https://t.me/your_bot_username?start=ref_${user.id}`
+			// Получаем username бота из initData
+			const botUsername = Telegram.WebApp.initDataUnsafe.user?.username || 'your_bot_username';
+			const referralLink = `https://t.me/${botUsername}?start=ref_${user.id}`
 			document.getElementById('referralLink').textContent = referralLink
 
 			// Здесь будет запрос к API для получения статистики
@@ -173,6 +174,8 @@ if (window.Telegram && Telegram.WebApp) {
 	const user = Telegram.WebApp.initDataUnsafe.user
 	if (user) {
 		console.log('User data:', user)
+		// Загружаем начальные данные профиля
+		loadReferralData();
 	}
 } else {
 	console.log('Telegram Web App not detected')
