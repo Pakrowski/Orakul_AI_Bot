@@ -819,3 +819,22 @@ input:checked+.slider:before {
   background: #000000;
   border-radius: 50%;
 }
+/* Стиль для звезд как у конкурента */
+.stars-packages .package-price {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #ffd700;
+}
+
+.stars-price {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.stars-icon {
+  font-size: 16px;
+  color: #ffd700;
+  filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5));
+}
