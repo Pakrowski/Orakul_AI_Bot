@@ -96,6 +96,23 @@ function handleEmailInput() {
 	}
 }
 
+// Функция для обновления баланса из бота
+function updateBalanceFromBot() {
+    if (window.Telegram && Telegram.WebApp) {
+        Telegram.WebApp.sendData(JSON.stringify({
+            action: 'get_balance'
+        }));
+    }
+}
+
+// Функция для обновления отображаемого баланса
+function updateBalanceDisplay(newBalance) {
+    const balanceElement = document.getElementById('balanceAmount');
+    if (balanceElement) {
+        balanceElement.textContent = newBalance;
+    }
+}
+
 // Обработка оплаты
 function processPayment() {
 	if (!selectedPackage) {
@@ -173,7 +190,7 @@ function processPayment() {
 						document.getElementById('balanceAmount').textContent
 					)
 					const newBalance = currentBalance + selected.amount
-					document.getElementById('balanceAmount').textContent = newBalance
+					updateBalanceDisplay(newBalance)
 
 					if (selectedPaymentMethod === 'stars') {
 						Telegram.WebApp.showAlert(
@@ -185,6 +202,10 @@ function processPayment() {
 							`Оплата успешно завершена! Получено ${selected.amount} сообщений. Чек отправлен на ${email}`
 						)
 					}
+					
+					// Запрашиваем актуальный баланс у бота для синхронизации
+					setTimeout(updateBalanceFromBot, 1000);
+					
 					switchTab('profile')
 				}
 			}
@@ -243,6 +264,8 @@ function subscribePremium() {
 
 					setTimeout(() => {
 						Telegram.WebApp.showAlert('Подписка успешно активирована!')
+						// Запрашиваем актуальный баланс у бота
+						setTimeout(updateBalanceFromBot, 1000);
 						switchTab('profile')
 					}, 1000)
 				}
@@ -350,11 +373,11 @@ function closeLegalContent() {
 function handleBotData(data) {
 	try {
 		const parsedData = JSON.parse(data)
+		console.log('Received data from bot:', parsedData)
 
 		switch (parsedData.action) {
 			case 'update_balance':
-				document.getElementById('balanceAmount').textContent =
-					parsedData.balance
+				updateBalanceDisplay(parsedData.balance)
 				break
 			case 'update_referral_stats':
 				document.getElementById('referralsCount').textContent =
@@ -363,16 +386,25 @@ function handleBotData(data) {
 					parsedData.earned_messages
 				break
 			case 'purchase_success':
-				document.getElementById('balanceAmount').textContent =
-					parsedData.new_balance
-				Telegram.WebApp.showAlert(
-					`Успешно! Баланс пополнен на ${parsedData.amount} сообщений.`
-				)
+				updateBalanceDisplay(parsedData.new_balance)
+				if (window.Telegram && Telegram.WebApp) {
+					Telegram.WebApp.showAlert(
+						`Успешно! Баланс пополнен на ${parsedData.amount} сообщений.`
+					)
+				}
 				break
+			default:
+				console.log('Unknown action:', parsedData.action)
 		}
 	} catch (e) {
 		console.error('Error parsing data from bot:', e)
 	}
+}
+
+// Функция для периодической синхронизации баланса
+function startBalanceSync() {
+	// Синхронизируем баланс каждые 30 секунд
+	setInterval(updateBalanceFromBot, 30000);
 }
 
 // Инициализация Telegram Web App
@@ -382,6 +414,7 @@ if (window.Telegram && Telegram.WebApp) {
 
 	// Обработчик входящих данных от бота
 	Telegram.WebApp.onEvent('webAppDataReceived', event => {
+		console.log('WebApp data received:', event)
 		if (event.data) {
 			handleBotData(event.data)
 		}
@@ -396,15 +429,14 @@ if (window.Telegram && Telegram.WebApp) {
 		const urlParams = new URLSearchParams(window.location.search)
 		const balance = urlParams.get('balance')
 		if (balance) {
-			document.getElementById('balanceAmount').textContent = balance
+			updateBalanceDisplay(balance)
 		}
 
-		// Запрашиваем актуальный баланс у бота
-		Telegram.WebApp.sendData(
-			JSON.stringify({
-				action: 'get_balance',
-			})
-		)
+		// Запрашиваем актуальный баланс у бота при загрузке
+		setTimeout(updateBalanceFromBot, 1000);
+		
+		// Запускаем периодическую синхронизацию
+		startBalanceSync();
 	}
 } else {
 	console.log('Telegram Web App not detected')
@@ -414,6 +446,11 @@ if (window.Telegram && Telegram.WebApp) {
 	// Устанавливаем тумблеры в выключенное состояние по умолчанию
 	document.getElementById('horoscopeToggle').checked = false
 	document.getElementById('adviceToggle').checked = false
+	
+	// Показываем тестовый баланс
+	const urlParams = new URLSearchParams(window.location.search)
+	const balance = urlParams.get('balance') || '5'
+	updateBalanceDisplay(balance)
 }
 
 // Добавляем обработчик для валидации email в реальном времени
@@ -426,4 +463,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	// Устанавливаем способ оплаты по умолчанию как выбранный
 	selectPaymentMethod('sbp')
+	
+	// Добавляем кнопку для принудительной синхронизации баланса (для отладки)
+	if (!window.Telegram || !Telegram.WebApp) {
+		const syncButton = document.createElement('button')
+		syncButton.textContent = '🔄 Синхронизировать баланс'
+		syncButton.className = 'btn btn-primary'
+		syncButton.style.marginTop = '10px'
+		syncButton.onclick = function() {
+			const currentBalance = parseInt(document.getElementById('balanceAmount').textContent)
+			const newBalance = currentBalance + 1
+			updateBalanceDisplay(newBalance)
+			alert('Баланс синхронизирован (тестовый режим)')
+		}
+		document.querySelector('.balance-card').appendChild(syncButton)
+	}
 })
