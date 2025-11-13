@@ -12,144 +12,314 @@
   <div class="container">
     <!-- Заголовок -->
     <div class="header">
-      <h1>🔮 ОРАКУЛ AI</h1>
-      <p>Ваш личный проводник в мир тайн</p>
+      <div class="header-center">
+        <h1>Оракул AI</h1>
+        <p>Ваш личный проводник в мир тайн</p>
+      </div>
     </div>
 
     <!-- Табы -->
     <div class="tab-container">
-      <div class="tab active" onclick="switchTab('profile')">👤 ПРОФИЛЬ</div>
-      <div class="tab" onclick="switchTab('shop')">🛍️ МАГАЗИН</div>
-      <div class="tab" onclick="switchTab('referral')">👥 РЕФЕРАЛКА</div>
-      <div class="tab" onclick="switchTab('notifications')">⚙️ РАССЫЛКИ</div>
-      <div class="tab" onclick="switchTab('legal')">⚖️ ЮРИДИЧЕСКОЕ</div>
+      <div class="tab active" onclick="switchTab('profile')">
+        <div class="tab-icon">👤</div>
+        <div class="tab-text">Профиль</div>
+      </div>
+      <div class="tab" onclick="switchTab('shop')">
+        <div class="tab-icon">🛍️</div>
+        <div class="tab-text">Магазин</div>
+      </div>
+      <div class="tab" onclick="switchTab('referral')">
+        <div class="tab-icon">👥</div>
+        <div class="tab-text">Рефералы</div>
+      </div>
+      <div class="tab" onclick="switchTab('notifications')">
+        <div class="tab-icon">📧</div>
+        <div class="tab-text">Рассылки</div>
+      </div>
+      <div class="tab" onclick="switchTab('legal')">
+        <div class="tab-icon">⚖️</div>
+        <div class="tab-text">Документы</div>
+      </div>
     </div>
 
     <!-- Профиль -->
-    <div id="profile" class="tab-content active">
-      <div class="card">
-        <div class="balance">
-          <div class="balance-label">ВАШ БАЛАНС СООБЩЕНИЙ</div>
+    <div id="profile" class="tab-content">
+      <div class="card balance-card">
+        <div class="balance-main">
           <div class="balance-amount" id="balanceAmount">10</div>
           <div class="balance-label">сообщений доступно</div>
         </div>
+        <button class="btn btn-primary" onclick="switchTab('shop')">
+          Пополнить баланс
+        </button>
       </div>
 
       <div class="card">
-        <div class="section-title">🚀 ПОДПИСКА</div>
-        <div class="subscription-info">
-          <div class="subscription-status">Подписка не активна</div>
-          <button class="btn btn-primary" onclick="switchTab('shop')">
-            💎 АКТИВИРОВАТЬ ПОДПИСКУ
-          </button>
+        <div class="card-header">
+          <div class="card-title">📊 Статистика</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value">0</div>
+            <div class="stat-label">раскладов</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">0</div>
+            <div class="stat-label">друзей</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">1</div>
+            <div class="stat-label">день с нами</div>
+          </div>
         </div>
       </div>
 
       <div class="card">
-        <div class="section-title">📊 ИСТОРИЯ ОПЕРАЦИЙ</div>
-        <div class="empty-state">
-          Операций пока нет
+        <div class="card-header">
+          <div class="card-title">🚀 Премиум подписка</div>
+        </div>
+        <div class="premium-offer">
+          <div class="premium-badge">РЕКОМЕНДУЕМ</div>
+          <div class="premium-features">
+            <div class="feature">✓ Безлимит сообщений</div>
+            <div class="feature">✓ Персональные рассылки</div>
+            <div class="feature">✓ Приоритетная генерация</div>
+          </div>
+          <div class="premium-price">1 990 ₽ / 30 дней</div>
+          <button class="btn btn-premium" onclick="subscribePremium()">
+            Активировать подписку
+          </button>
         </div>
       </div>
     </div>
 
     <!-- Магазин -->
-    <div id="shop" class="tab-content">
+    <div id="shop" class="tab-content active">
       <div class="card">
-        <div class="section-title">💎 ПАКЕТЫ СООБЩЕНИЙ</div>
-
-        <div class="package" onclick="selectPackage(1)">
-          <div class="package-header">
-            <div class="package-name">5 сообщений</div>
-            <div class="package-price">299 ₽</div>
-          </div>
-          <div class="package-desc">Для знакомства с возможностями</div>
+        <div class="card-header">
+          <div class="card-title">💎 ВЫБЕРИТЕ СПОСОБ ОПЛАТЫ</div>
         </div>
 
-        <div class="package" onclick="selectPackage(2)">
-          <div class="package-header">
-            <div class="package-name">15 сообщений</div>
-            <div class="package-price">799 ₽</div>
+        <div class="payment-methods">
+          <div class="payment-method selected" onclick="selectPaymentMethod('sbp')">
+            <div class="method-selector">
+              <div class="radio-dot"></div>
+            </div>
+            <div class="method-info">
+              <div class="method-name">СБП</div>
+            </div>
           </div>
-          <div class="package-desc">Популярный выбор</div>
+          <div class="payment-method" onclick="selectPaymentMethod('card')">
+            <div class="method-selector">
+              <div class="radio-dot"></div>
+            </div>
+            <div class="method-info">
+              <div class="method-name">Банковская карта</div>
+            </div>
+          </div>
+          <div class="payment-method" onclick="selectPaymentMethod('stars')">
+            <div class="method-selector">
+              <div class="radio-dot"></div>
+            </div>
+            <div class="method-info">
+              <div class="method-name">Telegram Stars</div>
+            </div>
+          </div>
+          <div class="payment-method" onclick="selectPaymentMethod('crypto')">
+            <div class="method-selector">
+              <div class="radio-dot"></div>
+            </div>
+            <div class="method-info">
+              <div class="method-name">Криптовалюта</div>
+            </div>
+          </div>
         </div>
 
-        <div class="package" onclick="selectPackage(3)">
-          <div class="package-header">
-            <div class="package-name">50 сообщений</div>
-            <div class="package-price">1 999 ₽</div>
+        <div class="packages-section">
+          <div class="section-title">ВЫБЕРИТЕ КОЛИЧЕСТВО СООБЩЕНИЙ</div>
+
+          <!-- Обычные пакеты (для всех способов оплаты кроме Stars) -->
+          <div class="packages-list" id="regularPackages">
+            <div class="package-option" onclick="selectPackage(1)">
+              <div class="package-selector">
+                <div class="radio-dot"></div>
+              </div>
+              <div class="package-info">
+                <div class="package-amount">100 сообщений</div>
+                <div class="package-price">300 ₽</div>
+              </div>
+            </div>
+
+            <div class="package-option" onclick="selectPackage(2)">
+              <div class="package-selector">
+                <div class="radio-dot"></div>
+              </div>
+              <div class="package-info">
+                <div class="package-amount">200 сообщений</div>
+                <div class="package-price">600 ₽</div>
+              </div>
+            </div>
+
+            <div class="package-option" onclick="selectPackage(3)">
+              <div class="package-selector">
+                <div class="radio-dot"></div>
+              </div>
+              <div class="package-info">
+                <div class="package-amount">300 сообщений</div>
+                <div class="package-price">900 ₽</div>
+              </div>
+            </div>
+
+            <div class="package-option" onclick="selectPackage(4)">
+              <div class="package-selector">
+                <div class="radio-dot"></div>
+              </div>
+              <div class="package-info">
+                <div class="package-amount">500 сообщений</div>
+                <div class="package-price">1 500 ₽</div>
+              </div>
+            </div>
+
+            <div class="package-option" onclick="selectPackage(5)">
+              <div class="package-selector">
+                <div class="radio-dot"></div>
+              </div>
+              <div class="package-info">
+                <div class="package-amount">1000 сообщений</div>
+                <div class="package-price">3 000 ₽</div>
+              </div>
+            </div>
           </div>
-          <div class="package-desc">Выгодный пакет</div>
+
+          <!-- Пакеты для Telegram Stars -->
+          <div class="packages-list stars-packages" id="starsPackages" style="display: none;">
+            <div class="package-option" onclick="selectStarsPackage(1)">
+              <div class="package-selector">
+                <div class="radio-dot"></div>
+              </div>
+              <div class="package-info">
+                <div class="package-amount">100 сообщений</div>
+                <div class="package-price">⭐ 300</div>
+              </div>
+            </div>
+
+            <div class="package-option" onclick="selectStarsPackage(2)">
+              <div class="package-selector">
+                <div class="radio-dot"></div>
+              </div>
+              <div class="package-info">
+                <div class="package-amount">200 сообщений</div>
+                <div class="package-price">⭐ 600</div>
+              </div>
+            </div>
+
+            <div class="package-option" onclick="selectStarsPackage(3)">
+              <div class="package-selector">
+                <div class="radio-dot"></div>
+              </div>
+              <div class="package-info">
+                <div class="package-amount">300 сообщений</div>
+                <div class="package-price">⭐ 900</div>
+              </div>
+            </div>
+
+            <div class="package-option" onclick="selectStarsPackage(4)">
+              <div class="package-selector">
+                <div class="radio-dot"></div>
+              </div>
+              <div class="package-info">
+                <div class="package-amount">500 сообщений</div>
+                <div class="package-price">⭐ 1 500</div>
+              </div>
+            </div>
+
+            <div class="package-option" onclick="selectStarsPackage(5)">
+              <div class="package-selector">
+                <div class="radio-dot"></div>
+              </div>
+              <div class="package-info">
+                <div class="package-amount">1000 сообщений</div>
+                <div class="package-price">⭐ 3 000</div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <button class="btn btn-primary" onclick="processPayment()">
-          💳 ПЕРЕЙТИ К ОПЛАТЕ
-        </button>
-      </div>
-
-      <div class="card">
-        <div class="section-title">🚀 ПОДПИСКА "ОРАКУЛ ПРЕМИУМ"</div>
-        <div class="premium-features">
-          <div class="feature-list">
-            ✅ Безлимит сообщений<br>
-            ✅ Персонализированные рассылки<br>
-            ✅ Приоритетная генерация<br>
-            ✅ Эксклюзивные расклады<br>
-            ✅ Личный нумерологический отчет
-          </div>
-          <div class="premium-price">
-            1 990 ₽ / 30 дней
-          </div>
+        <div class="email-section" id="emailSection">
+          <div class="section-title">ВАШ EMAIL ДЛЯ ОТПРАВКИ ЧЕКА</div>
+          <input type="email" class="email-input" placeholder="example@gmail.com" id="emailInput">
+          <div class="email-error" id="emailError" style="display: none;">Пожалуйста, введите корректный email</div>
         </div>
-        <button class="btn btn-primary" onclick="subscribePremium()">
-          🚀 АКТИВИРОВАТЬ ПОДПИСКУ
+
+        <div class="terms-notice">
+          Приобретая сообщения вы принимаете <a href="#" onclick="openTermsOfService()">Условия использования</a>. Все
+          покупки являются окончательными и возврату не подлежат.
+        </div>
+
+        <button class="btn btn-beautiful" onclick="processPayment()">
+          КУПИТЬ
         </button>
       </div>
     </div>
 
-    <!-- Рефералка -->
+    <!-- Рефералы -->
     <div id="referral" class="tab-content">
       <div class="card">
-        <div class="section-title">👥 РЕФЕРАЛЬНАЯ ПРОГРАММА</div>
+        <div class="card-header">
+          <div class="card-title">👥 Пригласите друзей</div>
+        </div>
 
-        <div class="referral-stats">
-          <div class="stat-item">
-            <div class="stat-value" id="referralsCount">0</div>
-            <div class="stat-label">приглашено друзей</div>
+        <div class="referral-hero">
+          <div class="referral-icon">🎁</div>
+          <div class="referral-title">Получите 5 сообщений за каждого друга!</div>
+          <div class="referral-subtitle">Максимум 3 друга = 15 сообщений</div>
+        </div>
+
+        <div class="referral-stats-grid">
+          <div class="referral-stat">
+            <div class="stat-number" id="referralsCount">0</div>
+            <div class="stat-label">приглашено</div>
           </div>
-          <div class="stat-item">
-            <div class="stat-value" id="referralsEarned">0</div>
-            <div class="stat-label">получено сообщений</div>
+          <div class="referral-stat">
+            <div class="stat-number" id="referralsEarned">0</div>
+            <div class="stat-label">получено</div>
           </div>
-          <div class="stat-item">
-            <div class="stat-value">3</div>
-            <div class="stat-label">максимум приглашений</div>
+          <div class="referral-stat">
+            <div class="stat-number">3</div>
+            <div class="stat-label">максимум</div>
           </div>
         </div>
 
-        <div class="referral-info">
-          <p>💫 Приглашайте друзей и получайте <strong>5 сообщений</strong> за каждого!</p>
-          <p>🎁 Максимум можно пригласить <strong>3 друзей</strong> (всего 15 сообщений)</p>
-        </div>
-
-        <div class="referral-link-card">
-          <div class="section-title">🔗 ВАША РЕФЕРАЛЬНАЯ ССЫЛКА</div>
-          <div class="referral-link" id="referralLink">
-            Загрузка...
+        <div class="referral-link-section">
+          <div class="section-label">Ваша реферальная ссылка:</div>
+          <div class="referral-link-container">
+            <div class="referral-link" id="referralLink">Загрузка...</div>
+            <button class="btn-copy" onclick="copyReferralLink()">📋</button>
           </div>
-          <button class="btn btn-secondary" onclick="copyReferralLink()">
-            📋 Скопировать ссылку
-          </button>
         </div>
 
-        <div class="referral-instructions">
-          <h4>📝 Как это работает:</h4>
-          <ol>
-            <li>Поделитесь ссылкой с другом</li>
-            <li>Друг должен перейти по ссылке и начать использовать бота</li>
-            <li>После его первого расклада вы получите 5 сообщений</li>
-            <li>Максимум 3 приглашения = 15 сообщений</li>
-          </ol>
+        <div class="referral-steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <div class="step-title">Поделитесь ссылкой</div>
+              <div class="step-desc">Отправьте другу вашу реферальную ссылку</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <div class="step-title">Друг начинает использовать бота</div>
+              <div class="step-desc">Он должен сделать хотя бы один расклад</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <div class="step-title">Получите награду</div>
+              <div class="step-desc">+5 сообщений на ваш баланс</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -157,150 +327,183 @@
     <!-- Рассылки -->
     <div id="notifications" class="tab-content">
       <div class="card">
-        <div class="section-title">🌞 ЕЖЕДНЕВНЫЕ УВЕДОМЛЕНИЯ</div>
-
-        <div class="setting">
-          <div class="setting-info">
-            <div class="setting-title">Гороскоп дня</div>
-            <div class="setting-desc">Персональный астропрогноз каждый день</div>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="horoscopeToggle">
-            <span class="slider"></span>
-          </label>
+        <div class="card-header">
+          <div class="card-title">📧 Настройки рассылок</div>
         </div>
 
-        <div class="setting">
-          <div class="setting-info">
-            <div class="setting-title">Совет дня от Оракула</div>
-            <div class="setting-desc">Мудрость и напутствие на день</div>
+        <div class="setting-group">
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-title">Гороскоп дня</div>
+              <div class="setting-desc">Персональный астропрогноз каждый день</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="horoscopeToggle">
+              <span class="slider"></span>
+            </label>
           </div>
-          <label class="switch">
-            <input type="checkbox" id="adviceToggle">
-            <span class="slider"></span>
-          </label>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-title">Совет дня от Оракула</div>
+              <div class="setting-desc">Мудрость и напутствие на день</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="adviceToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
         </div>
 
-        <div class="setting">
+        <div class="time-setting">
           <div class="setting-info">
             <div class="setting-title">Время получения</div>
-            <div class="setting-desc">Установите удобное время</div>
+            <div class="setting-desc">Установите удобное время для уведомлений</div>
           </div>
           <select id="timeSelect" class="time-select">
-            <option>09:00</option>
-            <option>10:00</option>
-            <option>12:00</option>
-            <option>18:00</option>
-            <option>20:00</option>
+            <option value="09:00">09:00</option>
+            <option value="10:00" selected>10:00</option>
+            <option value="12:00">12:00</option>
+            <option value="18:00">18:00</option>
+            <option value="20:00">20:00</option>
           </select>
         </div>
 
         <button class="btn btn-primary" onclick="saveSettings()">
-          💾 СОХРАНИТЬ НАСТРОЙКИ
+          💾 Сохранить настройки
         </button>
       </div>
     </div>
 
-    <!-- Юридическое -->
+    <!-- Документы -->
     <div id="legal" class="tab-content">
       <div class="card">
-        <div class="section-title">⚖️ ЮРИДИЧЕСКАЯ ИНФОРМАЦИЯ</div>
-
-        <div class="legal-tabs">
-          <div class="legal-tab active" onclick="switchLegalTab('privacy')">📄 ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ</div>
-          <div class="legal-tab" onclick="switchLegalTab('terms')">📝 ПОЛЬЗОВАТЕЛЬСКОЕ СОГЛАШЕНИЕ</div>
+        <div class="card-header">
+          <div class="card-title">📄 Документы</div>
         </div>
 
-        <!-- Политика конфиденциальности -->
-        <div id="privacyContent" class="legal-content active">
-          <div class="legal-section">
-            <h3>1. ОБРАБОТКА ДАННЫХ</h3>
-            <p>Мы не собираем и не храним ваши персональные данные. Все взаимодействие с ботом является анонимным.</p>
+        <div class="documents-list">
+          <div class="document-item" onclick="openPrivacyPolicy()">
+            <div class="document-icon">📄</div>
+            <div class="document-info">
+              <div class="document-title">Политика конфиденциальности</div>
+              <div class="document-arrow">›</div>
+            </div>
           </div>
 
-          <div class="legal-section">
-            <h3>2. ИСПОЛЬЗУЕМАЯ ИНФОРМАЦИЯ</h3>
-            <p>Бот имеет доступ только к вашему Telegram ID и имени пользователя для обеспечения работоспособности
-              сервиса.</p>
+          <div class="document-item" onclick="openTermsOfService()">
+            <div class="document-icon">📝</div>
+            <div class="document-info">
+              <div class="document-title">Пользовательское соглашение</div>
+              <div class="document-arrow">›</div>
+            </div>
           </div>
+        </div>
+      </div>
+    </div>
 
-          <div class="legal-section">
-            <h3>3. БЕЗОПАСНОСТЬ</h3>
-            <p>Все запросы к боту обрабатываются безопасно. Мы не передаем ваши данные третьим лицам.</p>
-          </div>
+    <!-- Контент пользовательского соглашения -->
+    <div id="termsContent" class="legal-content" style="display: none;">
+      <div class="legal-header">
+        <button class="back-button" onclick="closeLegalContent()">‹</button>
+        <div class="legal-title">Пользовательское соглашение</div>
+      </div>
 
-          <div class="legal-section">
-            <h3>4. COOKIES И АНАЛИТИКА</h3>
-            <p>Мы не используем cookies и не отслеживаем ваши действия за пределами бота.</p>
-          </div>
-
-          <a href="https://telegram.org/privacy-tpa" class="legal-link" target="_blank">
-            📄 Полная версия Политики конфиденциальности Telegram
-          </a>
+      <div class="legal-text-content">
+        <div class="legal-section">
+          <h3>Россия, г. Чита, 13.11.2025</h3>
+          <p>Нижеследующие правила пользования сервисами чат-бота «Оракул AI» в мессенджере Telegram, расположенного по
+            адресу https://t.me/orakul_ai_bot (далее – Чат-бот), являются публичной офертой в соответствии со ст. 437
+            Гражданского кодекса Российской Федерации для любых лиц, желающих использовать Чат-бот, включая любые его
+            услуги, разделы, сервисы, возможности и инструменты, а также уже начавших использование Чат-бота, а равно
+            осуществивших регистрацию (далее – Пользователи).</p>
         </div>
 
-        <!-- Пользовательское соглашение -->
-        <div id="termsContent" class="legal-content">
-          <div class="legal-section">
-            <h3>1. ОБЩИЕ ПОЛОЖЕНИЯ</h3>
-            <p>Настоящее Пользовательское соглашение регулирует использование чат-бота «Оракул AI». Услуги носят
-              развлекательно-информационный характер и не заменяют профессиональную помощь.</p>
-          </div>
+        <div class="legal-section">
+          <h3>Акцепт оферты</h3>
+          <p>Надлежащим Акцептом Оферты в соответствии со статьей 438 Гражданского кодекса Российской Федерации
+            считается последовательное осуществление третьим лицом в совокупности всех следующих действий:</p>
+          <ul class="legal-list">
+            <li>Нажатие кнопки «Начать» или отправка команды "/start" в Чат-боте;</li>
+            <li>Ознакомление с условиями Пользовательского соглашения;</li>
+          </ul>
+          <p>С момента подтверждения регистрация в Чат-боте считается завершенной, оферта, содержащаяся в
+            Пользовательском соглашении, надлежащим образом акцептованной, а условия Пользовательского соглашения
+            обязательными для зарегистрированного лица.</p>
+        </div>
 
-          <div class="legal-section">
-            <h3>2. СТАТУС УСЛУГ</h3>
-            <p>Все услуги предоставляются "как есть". Администрация не гарантирует точность предсказаний и не несет
-              ответственности за решения, принятые на основе полученной информации.</p>
-          </div>
+        <div class="legal-section">
+          <h3>1. Общие положения</h3>
+          <p>1.1. Настоящее Пользовательское соглашение регулирует отношения между Администрацией чат-бота «Оракул AI» и
+            Пользователем.</p>
+          <p>1.2. Использование Чат-бота означает безоговорочное согласие Пользователя с условиями настоящего
+            Соглашения.</p>
+          <p>1.3. Все услуги предоставляются «как есть». Администрация не гарантирует точность предсказаний и не несет
+            ответственности за решения, принятые на основе полученной информации.</p>
+        </div>
 
-          <div class="legal-section">
-            <h3>3. УСЛОВИЯ ОПЛАТЫ</h3>
-            <p>
-              <strong>3.1.</strong> При регистрации предоставляется 10 бесплатных сообщений<br>
-              <strong>3.2.</strong> Все платежи являются окончательными и не подлежат возврату<br>
-              <strong>3.3.</strong> Сообщения действуют 1 год с момента покупки<br>
-              <strong>3.4.</strong> Подписка действует 30 дней с момента активации
-            </p>
-          </div>
+        <div class="legal-section">
+          <h3>2. Условия использования</h3>
+          <p>2.1. Пользователь обязуется использовать Чат-бот исключительно в законных целях.</p>
+          <p>2.2. Запрещено использование сервиса для распространения незаконного контента, создания фейковой информации
+            или любой противоправной деятельности.</p>
+          <p>2.3. Пользователь несет полную ответственность за содержание создаваемых запросов и интерпретацию
+            полученных результатов.</p>
+        </div>
 
-          <div class="legal-section">
-            <h3>4. ОГРАНИЧЕНИЯ ИСПОЛЬЗОВАНИЯ</h3>
-            <p>Запрещено использование сервиса для:</p>
-            <ul class="legal-list">
-              <li>Распространения незаконного контента</li>
-              <li>Создания фейковой информации</li>
-              <li>Любой противоправной деятельности</li>
-              <li>Пропаганды запрещенных веществ</li>
-            </ul>
-          </div>
+        <div class="legal-section">
+          <h3>3. Оплата и возвраты</h3>
+          <p>3.1. Стоимость одного сообщения составляет 3 рубля.</p>
+          <p>3.2. Сообщения приобретаются пакетами: 100, 200, 300, 500, 1000 сообщений.</p>
+          <p>3.3. Срок действия приобретенных сообщений - 1 год с момента покупки.</p>
+          <p>3.4. <strong>Все платежи являются окончательными и не подлежат возврату</strong>, за исключением случаев,
+            предусмотренных законодательством РФ.</p>
+          <p>3.5. В случае технических сбоев, повлекших невозможность использования оплаченных услуг, Администрация
+            обязуется восстановить доступ к услугам в полном объеме.</p>
+        </div>
 
-          <div class="legal-section">
-            <h3>5. РЕФЕРАЛЬНАЯ ПРОГРАММА</h3>
-            <p>
-              <strong>5.1.</strong> За каждого приглашенного друга начисляется 5 сообщений<br>
-              <strong>5.2.</strong> Максимальное количество приглашений - 3 друга<br>
-              <strong>5.3.</strong> Бонус начисляется после первого расклада приглашенным пользователем<br>
-              <strong>5.4.</strong> Запрещено создание фейковых аккаунтов
-            </p>
-          </div>
+        <div class="legal-section">
+          <h3>4. Способы оплаты</h3>
+          <p>4.1. Для оплаты услуг доступны следующие способы:</p>
+          <ul class="legal-list">
+            <li>Банковские карты (Visa, MasterCard, МИР)</li>
+            <li>Система быстрых платежей (СБП)</li>
+            <li>Telegram Stars</li>
+            <li>Криптовалюта (USDT, BTC, ETH)</li>
+          </ul>
+          <p>4.2. При оплате криптовалютами курс фиксируется на момент совершения транзакции.</p>
+        </div>
 
-          <div class="legal-section">
-            <h3>6. ИНТЕЛЛЕКТУАЛЬНАЯ СОБСТВЕННОСТЬ</h3>
-            <p>Все права на программное обеспечение и контент бота принадлежат администрации. Пользователь сохраняет
-              права на контент, созданный с помощью бота.</p>
-          </div>
+        <div class="legal-section">
+          <h3>5. Интеллектуальная собственность</h3>
+          <p>5.1. Все права на программное обеспечение и контент бота принадлежат Администрации.</p>
+          <p>5.2. Пользователь сохраняет права на контент, созданный с помощью бота.</p>
+        </div>
 
-          <div class="legal-section">
-            <h3>7. ОГРАНИЧЕНИЕ ОТВЕТСТВЕННОСТИ</h3>
-            <p>Администрация не несет ответственности за технические сбои, потерю данных или решения, принятые
-              пользователем на основе полученной информации.</p>
-          </div>
+        <div class="legal-section">
+          <h3>6. Ограничение ответственности</h3>
+          <p>6.1. Администрация не несет ответственности за технические сбои, потерю данных или решения, принятые
+            пользователем на основе полученной информации.</p>
+          <p>6.2. Услуги носят развлекательно-информационный характер и не заменяют профессиональную помощь.</p>
+        </div>
 
-          <div class="legal-section">
-            <h3>8. ИЗМЕНЕНИЕ УСЛОВИЙ</h3>
-            <p>Администрация оставляет за собой право изменять условия соглашения. Продолжение использования бота
-              означает принятие новых условий.</p>
-          </div>
+        <div class="legal-section">
+          <h3>7. Реферальная программа</h3>
+          <p>7.1. За каждого приглашенного друга начисляется 5 сообщений.</p>
+          <p>7.2. Максимальное количество приглашений - 3 друга.</p>
+          <p>7.3. Бонус начисляется после первого расклада приглашенным пользователем.</p>
+          <p>7.4. Запрещено создание фейковых аккаунтов.</p>
+        </div>
+
+        <div class="legal-section">
+          <h3>8. Изменение условий</h3>
+          <p>8.1. Администрация оставляет за собой право изменять условия соглашения.</p>
+          <p>8.2. Продолжение использования бота означает принятие новых условий.</p>
+        </div>
+
+        <div class="legal-section">
+          <h3>9. Контакты</h3>
+          <p>По всем вопросам обращайтесь: @orakul_ai_support</p>
         </div>
       </div>
     </div>
