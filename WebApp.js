@@ -154,26 +154,38 @@ function processPayment() {
 			},
 			function (buttonId) {
 				if (buttonId === 'confirm') {
-					// Имитация успешной оплаты
-					setTimeout(() => {
-						const currentBalance = parseInt(
-							document.getElementById('balanceAmount').textContent
-						)
-						const newBalance = currentBalance + selected.amount
-						document.getElementById('balanceAmount').textContent = newBalance
+					// Отправляем данные о покупке в бот
+					const data = {
+						action: 'purchase_messages',
+						package_id: selectedPackage,
+						amount: selected.amount,
+						payment_method: selectedPaymentMethod,
+					}
 
-						if (selectedPaymentMethod === 'stars') {
-							Telegram.WebApp.showAlert(
-								`Оплата успешно завершена! Получено ${selected.amount} сообщений.`
-							)
-						} else {
-							const email = document.getElementById('emailInput').value.trim()
-							Telegram.WebApp.showAlert(
-								`Оплата успешно завершена! Получено ${selected.amount} сообщений. Чек отправлен на ${email}`
-							)
-						}
-						switchTab('profile')
-					}, 1000)
+					if (selectedPaymentMethod !== 'stars') {
+						data.email = document.getElementById('emailInput').value.trim()
+					}
+
+					Telegram.WebApp.sendData(JSON.stringify(data))
+
+					// Обновляем баланс локально
+					const currentBalance = parseInt(
+						document.getElementById('balanceAmount').textContent
+					)
+					const newBalance = currentBalance + selected.amount
+					document.getElementById('balanceAmount').textContent = newBalance
+
+					if (selectedPaymentMethod === 'stars') {
+						Telegram.WebApp.showAlert(
+							`Оплата успешно завершена! Получено ${selected.amount} сообщений.`
+						)
+					} else {
+						const email = document.getElementById('emailInput').value.trim()
+						Telegram.WebApp.showAlert(
+							`Оплата успешно завершена! Получено ${selected.amount} сообщений. Чек отправлен на ${email}`
+						)
+					}
+					switchTab('profile')
 				}
 			}
 		)
@@ -220,6 +232,15 @@ function subscribePremium() {
 			},
 			function (buttonId) {
 				if (buttonId === 'confirm') {
+					// Отправляем данные о подписке в бот
+					Telegram.WebApp.sendData(
+						JSON.stringify({
+							action: 'subscribe_premium',
+							price: 1990,
+							duration: 30,
+						})
+					)
+
 					setTimeout(() => {
 						Telegram.WebApp.showAlert('Подписка успешно активирована!')
 						switchTab('profile')
@@ -240,9 +261,12 @@ function loadReferralData() {
 			const referralLink = `https://t.me/orakul_ai_bot?start=ref_${user.id}`
 			document.getElementById('referralLink').textContent = referralLink
 
-			// Здесь будет запрос к API для получения статистики
-			document.getElementById('referralsCount').textContent = '0'
-			document.getElementById('referralsEarned').textContent = '0'
+			// Запрашиваем статистику рефералов у бота
+			Telegram.WebApp.sendData(
+				JSON.stringify({
+					action: 'get_referral_stats',
+				})
+			)
 		}
 	} else {
 		document.getElementById('referralLink').textContent =
@@ -322,21 +346,65 @@ function closeLegalContent() {
 	document.getElementById('legal').style.display = 'block'
 }
 
+// Обработка данных от бота
+function handleBotData(data) {
+	try {
+		const parsedData = JSON.parse(data)
+
+		switch (parsedData.action) {
+			case 'update_balance':
+				document.getElementById('balanceAmount').textContent =
+					parsedData.balance
+				break
+			case 'update_referral_stats':
+				document.getElementById('referralsCount').textContent =
+					parsedData.total_refs
+				document.getElementById('referralsEarned').textContent =
+					parsedData.earned_messages
+				break
+			case 'purchase_success':
+				document.getElementById('balanceAmount').textContent =
+					parsedData.new_balance
+				Telegram.WebApp.showAlert(
+					`Успешно! Баланс пополнен на ${parsedData.amount} сообщений.`
+				)
+				break
+		}
+	} catch (e) {
+		console.error('Error parsing data from bot:', e)
+	}
+}
+
 // Инициализация Telegram Web App
 if (window.Telegram && Telegram.WebApp) {
 	Telegram.WebApp.ready()
 	Telegram.WebApp.expand()
+
+	// Обработчик входящих данных от бота
+	Telegram.WebApp.onEvent('webAppDataReceived', event => {
+		if (event.data) {
+			handleBotData(event.data)
+		}
+	})
 
 	const user = Telegram.WebApp.initDataUnsafe.user
 	if (user) {
 		console.log('User data:', user)
 		loadReferralData()
 
+		// Получаем баланс из URL параметров и обновляем его
 		const urlParams = new URLSearchParams(window.location.search)
 		const balance = urlParams.get('balance')
 		if (balance) {
 			document.getElementById('balanceAmount').textContent = balance
 		}
+
+		// Запрашиваем актуальный баланс у бота
+		Telegram.WebApp.sendData(
+			JSON.stringify({
+				action: 'get_balance',
+			})
+		)
 	}
 } else {
 	console.log('Telegram Web App not detected')
