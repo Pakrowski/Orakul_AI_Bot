@@ -1,125 +1,257 @@
-// Переключение табов
-function switchTab(tabName) {
+// ==============================
+//  Утилиты: найти элемент по onclick
+// ==============================
+function findElementByOnclick(selector, fnName, argStr) {
+	// selector: css селектор, fnName: имя функции, argStr: строка аргумента (например 'profile' или '1')
+	const nodes = document.querySelectorAll(selector)
+	for (const n of nodes) {
+		const oc = n.getAttribute('onclick')
+		if (!oc) continue
+		// проверим варианты: fnName('arg'), fnName("arg"), fnName(arg)
+		if (argStr === undefined) {
+			if (oc.includes(fnName + '(')) return n
+		} else {
+			const patterns = [
+				`${fnName}('${argStr}')`,
+				`${fnName}("${argStr}")`,
+				`${fnName}(${argStr})`,
+			]
+			for (const p of patterns) {
+				if (oc.includes(p)) return n
+			}
+		}
+	}
+	return null
+}
+
+// ==============================
+//  Переключение табов (работает при вызове с el и без)
+// ==============================
+function switchTab(tabName, el) {
+	// Скрываем все контенты
 	document.querySelectorAll('.tab-content').forEach(tab => {
 		tab.style.display = 'none'
 	})
+	// Снимаем active со всех табов
 	document.querySelectorAll('.tab').forEach(tab => {
 		tab.classList.remove('active')
 	})
 
-	document.getElementById(tabName).style.display = 'block'
-	event.currentTarget.classList.add('active')
+	// Показываем нужный контент
+	const target = document.getElementById(tabName)
+	if (target) target.style.display = 'block'
 
-	if (tabName === 'referral') {
-		loadReferralData()
+	// Если элемент не передали — попробуем найти по inline onclick
+	if (!el) {
+		el = findElementByOnclick(
+			'.tab',
+			'switchTab',
+			`'${tabName}'`.replace(/'/g, '')
+		) // try fallback
+		// Попробуем искать с и без кавычек
+		if (!el) el = findElementByOnclick('.tab', 'switchTab', tabName)
 	}
+
+	if (el && el.classList) {
+		el.classList.add('active')
+	} else {
+		// если всё ещё не найден — выделим первый таб соответствующего id по index совпадению (fallback)
+		const maybe = Array.from(document.querySelectorAll('.tab')).find(t => {
+			const text = (t.textContent || '').trim().toLowerCase()
+			return text.includes(tabName.toLowerCase())
+		})
+		if (maybe) maybe.classList.add('active')
+	}
+
+	if (tabName === 'referral') loadReferralData()
 }
 
-// Выбор пакета сообщений
+// ==============================
+//  Helpers для radio-dot (твой CSS использует .radio-dot)
+// ==============================
+function setRadioDotSelected(containerEl, selected) {
+	if (!containerEl) return
+	const dot = containerEl.querySelector('.radio-dot')
+	if (!dot) return
+	if (selected) dot.classList.add('selected')
+	else dot.classList.remove('selected')
+}
+
+// ==============================
+//  Выбор пакета (регулярный) — работает с el или без
+// ==============================
 let selectedPackage = null
 let selectedPaymentMethod = 'sbp'
 
-function selectPackage(packageId) {
-	document.querySelectorAll('.package-option').forEach(pkg => {
+function selectPackage(packageId, el) {
+	// если el не передан — пытаемся найти .package-option с onclick содержащим selectPackage(packageId)
+	if (!el) {
+		el = findElementByOnclick(
+			'#regularPackages .package-option',
+			'selectPackage',
+			String(packageId)
+		)
+		// последний шанс: найти по порядковому индексу (1..n)
+		if (!el) {
+			const all = document.querySelectorAll('#regularPackages .package-option')
+			const idx = packageId - 1
+			if (all && all[idx]) el = all[idx]
+		}
+	}
+
+	document.querySelectorAll('#regularPackages .package-option').forEach(pkg => {
 		pkg.classList.remove('selected')
+		setRadioDotSelected(pkg, false)
 	})
-	event.currentTarget.classList.add('selected')
-	selectedPackage = packageId
+
+	if (el) {
+		el.classList.add('selected')
+		setRadioDotSelected(el, true)
+		selectedPackage = packageId
+	} else {
+		// fallback: просто установим selectedPackage
+		selectedPackage = packageId
+	}
 }
 
-function selectStarsPackage(packageId) {
-	document.querySelectorAll('.stars-packages .package-option').forEach(pkg => {
+// ==============================
+//  Выбор пакета Stars (работает с el или без)
+// ==============================
+function selectStarsPackage(packageId, el) {
+	if (!el) {
+		el = findElementByOnclick(
+			'#starsPackages .package-option',
+			'selectStarsPackage',
+			String(packageId)
+		)
+		if (!el) {
+			const all = document.querySelectorAll('#starsPackages .package-option')
+			const idx = packageId - 1
+			if (all && all[idx]) el = all[idx]
+		}
+	}
+
+	document.querySelectorAll('#starsPackages .package-option').forEach(pkg => {
 		pkg.classList.remove('selected')
+		setRadioDotSelected(pkg, false)
 	})
-	event.currentTarget.classList.add('selected')
-	selectedPackage = packageId
+
+	if (el) {
+		el.classList.add('selected')
+		setRadioDotSelected(el, true)
+		selectedPackage = packageId
+	} else {
+		selectedPackage = packageId
+	}
 }
 
-function selectPaymentMethod(method) {
+// ==============================
+//  Выбор метода оплаты (работает с el или без)
+// ==============================
+function selectPaymentMethod(method, el) {
+	// Если el не передан — попытаемся найти .payment-method с onclick содержащим метод
+	if (!el) {
+		el = findElementByOnclick(
+			'.payment-method',
+			'selectPaymentMethod',
+			String(method)
+		)
+		if (!el) {
+			// пробуем искать по тексту внутри
+			const all = document.querySelectorAll('.payment-method')
+			for (const pm of all) {
+				const txt = (pm.textContent || '').toLowerCase()
+				if (txt.includes(method.toLowerCase())) {
+					el = pm
+					break
+				}
+			}
+		}
+	}
+
 	document.querySelectorAll('.payment-method').forEach(pm => {
 		pm.classList.remove('selected')
+		setRadioDotSelected(pm, false)
 	})
-	event.currentTarget.classList.add('selected')
-	selectedPaymentMethod = method
 
-	// Показываем/скрываем соответствующие пакеты
+	if (el) {
+		el.classList.add('selected')
+		setRadioDotSelected(el, true)
+	}
+
+	// переключаем видимость пакетов
 	const regularPackages = document.getElementById('regularPackages')
 	const starsPackages = document.getElementById('starsPackages')
 	const emailSection = document.getElementById('emailSection')
 
 	if (method === 'stars') {
-		regularPackages.style.display = 'none'
-		starsPackages.style.display = 'block'
-		emailSection.classList.add('stars-hidden')
-		// Сбрасываем выбранный пакет при смене метода оплаты
-		selectedPackage = null
-		document.querySelectorAll('.package-option').forEach(pkg => {
-			pkg.classList.remove('selected')
-		})
+		if (regularPackages) regularPackages.style.display = 'none'
+		if (starsPackages) starsPackages.style.display = 'block'
+		if (emailSection) emailSection.classList.add('stars-hidden')
 	} else {
-		regularPackages.style.display = 'block'
-		starsPackages.style.display = 'none'
-		emailSection.classList.remove('stars-hidden')
-		// Сбрасываем выбранный пакет при смене метода оплаты
-		selectedPackage = null
-		document.querySelectorAll('.package-option').forEach(pkg => {
-			pkg.classList.remove('selected')
-		})
+		if (regularPackages) regularPackages.style.display = 'block'
+		if (starsPackages) starsPackages.style.display = 'none'
+		if (emailSection) emailSection.classList.remove('stars-hidden')
 	}
+
+	selectedPaymentMethod = method
+	// сброс выбранного пакета при смене метода
+	selectedPackage = null
+	document.querySelectorAll('.package-option').forEach(pkg => {
+		pkg.classList.remove('selected')
+		setRadioDotSelected(pkg, false)
+	})
 }
 
-// Валидация email
+// ==============================
+//  Email валидация
+// ==============================
 function validateEmail(email) {
-	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-	return emailRegex.test(email)
+	const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+	return re.test(email)
 }
-
 function handleEmailInput() {
 	const emailInput = document.getElementById('emailInput')
 	const emailError = document.getElementById('emailError')
+	if (!emailInput) return true
 	const email = emailInput.value.trim()
-
 	if (email === '') {
 		emailInput.classList.remove('error')
-		emailError.style.display = 'none'
+		if (emailError) emailError.style.display = 'none'
 		return true
 	}
-
 	if (validateEmail(email)) {
 		emailInput.classList.remove('error')
-		emailError.style.display = 'none'
+		if (emailError) emailError.style.display = 'none'
 		return true
 	} else {
 		emailInput.classList.add('error')
-		emailError.style.display = 'block'
+		if (emailError) emailError.style.display = 'block'
 		return false
 	}
 }
 
-// Функция для обновления баланса из бота
+// ==============================
+//  Баланс — отправка запроса боту
+// ==============================
 function updateBalanceFromBot() {
-    if (window.Telegram && Telegram.WebApp) {
-        Telegram.WebApp.sendData(JSON.stringify({
-            action: 'get_balance'
-        }));
-    }
+	if (window.Telegram && Telegram.WebApp) {
+		Telegram.WebApp.sendData(JSON.stringify({ action: 'get_balance' }))
+	}
 }
-
-// Функция для обновления отображаемого баланса
 function updateBalanceDisplay(newBalance) {
-    const balanceElement = document.getElementById('balanceAmount');
-    if (balanceElement) {
-        balanceElement.textContent = newBalance;
-    }
+	const el = document.getElementById('balanceAmount')
+	if (el) el.textContent = newBalance
 }
 
-// Обработка оплаты
+// ==============================
+//  Процесс оплаты
+// ==============================
 function processPayment() {
 	if (!selectedPackage) {
 		alert('Пожалуйста, выберите пакет сообщений')
 		return
 	}
-
 	const packages = {
 		1: { name: '100 сообщений', price: 300, amount: 100 },
 		2: { name: '200 сообщений', price: 600, amount: 200 },
@@ -127,43 +259,36 @@ function processPayment() {
 		4: { name: '500 сообщений', price: 1500, amount: 500 },
 		5: { name: '1000 сообщений', price: 3000, amount: 1000 },
 	}
-
 	const selected = packages[selectedPackage]
+	if (!selected) {
+		alert('Ошибка: неверный пакет')
+		return
+	}
 
-	// Для Stars не требуем email
+	let email = ''
 	if (selectedPaymentMethod !== 'stars') {
-		const email = document.getElementById('emailInput').value.trim()
-		if (!email) {
-			alert('Пожалуйста, введите email для отправки чека')
+		const inp = document.getElementById('emailInput')
+		if (!inp) {
+			alert('Введите email для чека')
 			return
 		}
-
+		email = inp.value.trim()
 		if (!validateEmail(email)) {
-			document.getElementById('emailInput').classList.add('error')
-			document.getElementById('emailError').style.display = 'block'
-			alert('Пожалуйста, введите корректный email адрес')
+			alert('Введите корректный email')
 			return
 		}
 	}
 
 	if (window.Telegram && Telegram.WebApp) {
-		let message = `Пакет: ${selected.name}\nКоличество: ${selected.amount} сообщений\n`
-
-		if (selectedPaymentMethod === 'stars') {
-			message += `Стоимость: ⭐ ${selected.price}\nСпособ: Telegram Stars`
-		} else {
-			const email = document.getElementById('emailInput').value.trim()
-			message += `Стоимость: ${
-				selected.price
-			} ₽\nСпособ: ${getPaymentMethodName(
-				selectedPaymentMethod
-			)}\nEmail: ${email}`
-		}
-
 		Telegram.WebApp.showPopup(
 			{
 				title: 'Подтверждение оплаты',
-				message: message,
+				message:
+					`Пакет: ${selected.name}\n` +
+					`Сообщений: ${selected.amount}\n` +
+					(selectedPaymentMethod === 'stars'
+						? `Стоимость: ⭐ ${selected.price}`
+						: `Стоимость: ${selected.price} ₽\nEmail: ${email}`),
 				buttons: [
 					{ id: 'confirm', type: 'default', text: 'Оплатить' },
 					{ type: 'cancel', text: 'Отмена' },
@@ -171,79 +296,41 @@ function processPayment() {
 			},
 			function (buttonId) {
 				if (buttonId === 'confirm') {
-					// Отправляем данные о покупке в бот
 					const data = {
 						action: 'purchase_messages',
 						package_id: selectedPackage,
 						amount: selected.amount,
 						payment_method: selectedPaymentMethod,
 					}
-
-					if (selectedPaymentMethod !== 'stars') {
-						data.email = document.getElementById('emailInput').value.trim()
-					}
+					if (selectedPaymentMethod !== 'stars') data.email = email
 
 					Telegram.WebApp.sendData(JSON.stringify(data))
-
-					// Обновляем баланс локально
-					const currentBalance = parseInt(
-						document.getElementById('balanceAmount').textContent
+					// локальное обновление UX — подождём подтверждения от бота для окончательного sync
+					const cur = parseInt(
+						document.getElementById('balanceAmount').textContent || '0',
+						10
 					)
-					const newBalance = currentBalance + selected.amount
-					updateBalanceDisplay(newBalance)
-
-					if (selectedPaymentMethod === 'stars') {
-						Telegram.WebApp.showAlert(
-							`Оплата успешно завершена! Получено ${selected.amount} сообщений.`
-						)
-					} else {
-						const email = document.getElementById('emailInput').value.trim()
-						Telegram.WebApp.showAlert(
-							`Оплата успешно завершена! Получено ${selected.amount} сообщений. Чек отправлен на ${email}`
-						)
-					}
-					
-					// Запрашиваем актуальный баланс у бота для синхронизации
-					setTimeout(updateBalanceFromBot, 1000);
-					
+					updateBalanceDisplay(cur + selected.amount)
 					switchTab('profile')
 				}
 			}
 		)
 	} else {
-		let message = `Пакет: ${selected.name}\nКоличество: ${selected.amount} сообщений\n`
-
-		if (selectedPaymentMethod === 'stars') {
-			message += `Стоимость: ⭐ ${selected.price}\nСпособ: Telegram Stars\n\nДля оплаты используйте Telegram.`
-		} else {
-			const email = document.getElementById('emailInput').value.trim()
-			message += `Стоимость: ${
-				selected.price
-			} ₽\nСпособ: ${getPaymentMethodName(
-				selectedPaymentMethod
-			)}\nEmail: ${email}\n\nДля оплаты используйте Telegram.`
-		}
-
-		alert(message)
+		// вне Telegram — просто показать данные
+		alert(
+			`Пакет: ${selected.name}\nСообщений: ${selected.amount}\nСтоимость: ${selected.price}\nДля оплаты откройте WebApp в Telegram`
+		)
 	}
 }
 
-function getPaymentMethodName(method) {
-	const methods = {
-		card: 'Банковская карта',
-		sbp: 'СБП',
-		stars: 'Telegram Stars',
-		crypto: 'Криптовалюта',
-	}
-	return methods[method] || method
-}
-
-// Активация подписки
+// ==============================
+//  Подписка
+// ==============================
 function subscribePremium() {
 	if (window.Telegram && Telegram.WebApp) {
 		Telegram.WebApp.showPopup(
 			{
-				title: 'Премиум подписка',
+				title: 'Премиум',
 				message:
 					'Активировать подписку "ОРАКУЛ ПРЕМИУМ" за 1 990 ₽ на 30 дней?',
 				buttons: [
@@ -253,7 +340,6 @@ function subscribePremium() {
 			},
 			function (buttonId) {
 				if (buttonId === 'confirm') {
-					// Отправляем данные о подписке в бот
 					Telegram.WebApp.sendData(
 						JSON.stringify({
 							action: 'subscribe_premium',
@@ -261,221 +347,214 @@ function subscribePremium() {
 							duration: 30,
 						})
 					)
-
-					setTimeout(() => {
-						Telegram.WebApp.showAlert('Подписка успешно активирована!')
-						// Запрашиваем актуальный баланс у бота
-						setTimeout(updateBalanceFromBot, 1000);
-						switchTab('profile')
-					}, 1000)
+					switchTab('profile')
 				}
 			}
 		)
 	} else {
-		alert('Для активации подписки используйте Telegram.')
+		alert('Откройте WebApp в Telegram для активации подписки')
 	}
 }
 
-// Загрузка реферальных данных
+// ==============================
+//  Реферальная логика и копирование
+// ==============================
 function loadReferralData() {
 	if (window.Telegram && Telegram.WebApp) {
-		const user = Telegram.WebApp.initDataUnsafe.user
+		const user =
+			Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.user
 		if (user) {
-			const referralLink = `https://t.me/orakul_ai_bot?start=ref_${user.id}`
-			document.getElementById('referralLink').textContent = referralLink
-
-			// Запрашиваем статистику рефералов у бота
-			Telegram.WebApp.sendData(
-				JSON.stringify({
-					action: 'get_referral_stats',
-				})
-			)
+			document.getElementById(
+				'referralLink'
+			).textContent = `https://t.me/orakul_ai_bot?start=ref_${user.id}`
+			Telegram.WebApp.sendData(JSON.stringify({ action: 'get_referral_stats' }))
 		}
 	} else {
 		document.getElementById('referralLink').textContent =
-			'https://t.me/orakul_ai_bot?start=ref_123456789'
+			'https://t.me/orakul_ai_bot?start=ref_123456'
 	}
 }
-
-// Копирование реферальной ссылки
 function copyReferralLink() {
 	const link = document.getElementById('referralLink').textContent
-	if (link !== 'Загрузка...' && link !== 'Доступно только в Telegram') {
-		navigator.clipboard
-			.writeText(link)
-			.then(() => {
-				if (window.Telegram && Telegram.WebApp) {
-					Telegram.WebApp.showPopup({
-						title: 'Успешно',
-						message: 'Ссылка скопирована в буфер обмена!',
-						buttons: [{ type: 'default', text: 'OK' }],
-					})
-				} else {
-					alert('Ссылка скопирована в буфер обмена!')
-				}
-			})
-			.catch(() => {
-				const textArea = document.createElement('textarea')
-				textArea.value = link
-				document.body.appendChild(textArea)
-				textArea.select()
-				document.execCommand('copy')
-				document.body.removeChild(textArea)
-				alert('Ссылка скопирована в буфер обмена!')
-			})
-	}
+	navigator.clipboard
+		.writeText(link)
+		.then(() => {
+			if (window.Telegram && Telegram.WebApp)
+				Telegram.WebApp.showAlert('Ссылка скопирована!')
+			else alert('Ссылка скопирована!')
+		})
+		.catch(() => alert('Ошибка копирования'))
 }
 
-// Сохранение настроек
-function saveSettings() {
-	const horoscopeEnabled = document.getElementById('horoscopeToggle').checked
-	const adviceEnabled = document.getElementById('adviceToggle').checked
-	const time = document.getElementById('timeSelect').value
-
-	if (window.Telegram && Telegram.WebApp) {
-		Telegram.WebApp.sendData(
-			JSON.stringify({
-				action: 'save_settings',
-				horoscope: horoscopeEnabled,
-				advice: adviceEnabled,
-				time: time,
-			})
-		)
-	}
-
-	if (window.Telegram && Telegram.WebApp) {
-		Telegram.WebApp.showAlert('Настройки рассылок сохранены!')
-	} else {
-		alert('Настройки рассылок сохранены!')
-	}
-}
-
-// Юридическая информация
+// ==============================
+//  Юридические документы
+// ==============================
 function openPrivacyPolicy() {
-	if (window.Telegram && Telegram.WebApp) {
+	if (window.Telegram && Telegram.WebApp)
 		Telegram.WebApp.openLink('https://telegram.org/privacy-tpa')
-	} else {
-		window.open('https://telegram.org/privacy-tpa', '_blank')
-	}
+	else window.open('https://telegram.org/privacy-tpa', '_blank')
 }
-
 function openTermsOfService() {
 	document.getElementById('legal').style.display = 'none'
 	document.getElementById('termsContent').style.display = 'block'
 }
-
 function closeLegalContent() {
 	document.getElementById('termsContent').style.display = 'none'
 	document.getElementById('legal').style.display = 'block'
 }
 
-// Обработка данных от бота
+// ==============================
+//  Обработка данных от бота
+// ==============================
 function handleBotData(data) {
 	try {
-		const parsedData = JSON.parse(data)
-		console.log('Received data from bot:', parsedData)
-
-		switch (parsedData.action) {
+		const parsed = JSON.parse(data)
+		if (!parsed || !parsed.action) return
+		switch (parsed.action) {
 			case 'update_balance':
-				updateBalanceDisplay(parsedData.balance)
+				updateBalanceDisplay(parsed.balance)
 				break
 			case 'update_referral_stats':
-				document.getElementById('referralsCount').textContent =
-					parsedData.total_refs
-				document.getElementById('referralsEarned').textContent =
-					parsedData.earned_messages
+				if (parsed.total_refs !== undefined)
+					document.getElementById('referralsCount').textContent =
+						parsed.total_refs
+				if (parsed.earned_messages !== undefined)
+					document.getElementById('referralsEarned').textContent =
+						parsed.earned_messages
 				break
 			case 'purchase_success':
-				updateBalanceDisplay(parsedData.new_balance)
-				if (window.Telegram && Telegram.WebApp) {
-					Telegram.WebApp.showAlert(
-						`Успешно! Баланс пополнен на ${parsedData.amount} сообщений.`
-					)
-				}
+				if (parsed.new_balance !== undefined)
+					updateBalanceDisplay(parsed.new_balance)
+				if (window.Telegram && Telegram.WebApp)
+					Telegram.WebApp.showAlert(`Оплачено: +${parsed.amount} сообщений`)
 				break
-			default:
-				console.log('Unknown action:', parsedData.action)
 		}
 	} catch (e) {
-		console.error('Error parsing data from bot:', e)
+		console.error('Ошибка парсинга данных от бота', e)
 	}
 }
 
-// Функция для периодической синхронизации баланса
-function startBalanceSync() {
-	// Синхронизируем баланс каждые 30 секунд
-	setInterval(updateBalanceFromBot, 30000);
-}
-
-// Инициализация Telegram Web App
+// ==============================
+//  Инициализация WebApp
+// ==============================
 if (window.Telegram && Telegram.WebApp) {
 	Telegram.WebApp.ready()
-	Telegram.WebApp.expand()
+	try {
+		Telegram.WebApp.expand()
+	} catch (e) {
+		/* ignore */
+	}
 
-	// Обработчик входящих данных от бота
-	Telegram.WebApp.onEvent('webAppDataReceived', event => {
-		console.log('WebApp data received:', event)
-		if (event.data) {
-			handleBotData(event.data)
-		}
+	Telegram.WebApp.onEvent('webAppDataReceived', ev => {
+		if (ev && ev.data) handleBotData(ev.data)
 	})
 
-	const user = Telegram.WebApp.initDataUnsafe.user
-	if (user) {
-		console.log('User data:', user)
-		loadReferralData()
-
-		// Получаем баланс из URL параметров и обновляем его
-		const urlParams = new URLSearchParams(window.location.search)
-		const balance = urlParams.get('balance')
-		if (balance) {
-			updateBalanceDisplay(balance)
-		}
-
-		// Запрашиваем актуальный баланс у бота при загрузке
-		setTimeout(updateBalanceFromBot, 1000);
-		
-		// Запускаем периодическую синхронизацию
-		startBalanceSync();
-	}
+	// Если в URL передан баланс — отобразим
+	const params = new URLSearchParams(window.location.search)
+	const balance = params.get('balance')
+	if (balance) updateBalanceDisplay(balance)
+	else updateBalanceFromBot()
 } else {
-	console.log('Telegram Web App not detected')
-	document.getElementById('referralLink').textContent =
-		'https://t.me/orakul_ai_bot?start=ref_123456789'
-
-	// Устанавливаем тумблеры в выключенное состояние по умолчанию
-	document.getElementById('horoscopeToggle').checked = false
-	document.getElementById('adviceToggle').checked = false
-	
-	// Показываем тестовый баланс
-	const urlParams = new URLSearchParams(window.location.search)
-	const balance = urlParams.get('balance') || '5'
-	updateBalanceDisplay(balance)
+	// не в Telegram — демонстрационные данные
+	document.addEventListener('DOMContentLoaded', () => {
+		const bal = document.getElementById('balanceAmount')
+		if (bal) bal.textContent = '5'
+		const ref = document.getElementById('referralLink')
+		if (ref) ref.textContent = 'https://t.me/orakul_ai_bot?start=ref_demo'
+	})
 }
 
-// Добавляем обработчик для валидации email в реальном времени
-document.addEventListener('DOMContentLoaded', function () {
-	const emailInput = document.getElementById('emailInput')
-	if (emailInput) {
-		emailInput.addEventListener('input', handleEmailInput)
-		emailInput.addEventListener('blur', handleEmailInput)
+// ==============================
+//  DOMContentLoaded: добавим слушатели на элементы (чтобы при клике передавать this)
+// ==============================
+document.addEventListener('DOMContentLoaded', () => {
+	// email
+	const email = document.getElementById('emailInput')
+	if (email) {
+		email.addEventListener('input', handleEmailInput)
+		email.addEventListener('blur', handleEmailInput)
 	}
 
-	// Устанавливаем способ оплаты по умолчанию как выбранный
-	selectPaymentMethod('sbp')
-	
-	// Добавляем кнопку для принудительной синхронизации баланса (для отладки)
-	if (!window.Telegram || !Telegram.WebApp) {
-		const syncButton = document.createElement('button')
-		syncButton.textContent = '🔄 Синхронизировать баланс'
-		syncButton.className = 'btn btn-primary'
-		syncButton.style.marginTop = '10px'
-		syncButton.onclick = function() {
-			const currentBalance = parseInt(document.getElementById('balanceAmount').textContent)
-			const newBalance = currentBalance + 1
-			updateBalanceDisplay(newBalance)
-			alert('Баланс синхронизирован (тестовый режим)')
-		}
-		document.querySelector('.balance-card').appendChild(syncButton)
-	}
+	// Привяжем клики к табам, если есть (передадим this)
+	document.querySelectorAll('.tab').forEach(tab => {
+		tab.addEventListener('click', function (e) {
+			// Если inline onclick уже вызывает switchTab, то двойной вызов не страшен — наша функция устойчива к повтору
+			const onclick = tab.getAttribute('onclick')
+			// Попробуем получить имя таба из onclick или data-tab
+			let name = tab.dataset.tab
+			if (!name && onclick) {
+				// ищем первый аргумент в кавычках
+				const m = onclick.match(/switchTab\((['"])?([^)'" ]+)\1?\)/)
+				if (m && m[2]) name = m[2]
+			}
+			if (!name) {
+				// fallback: ищем id по порядку, либо data-target
+				const possible = tab.querySelector('.tab-text')
+				if (possible) name = (possible.textContent || '').trim().toLowerCase()
+			}
+			if (name) switchTab(name, tab)
+			else {
+				// последний fallback: просто добавим active класс
+				document
+					.querySelectorAll('.tab')
+					.forEach(t => t.classList.remove('active'))
+				tab.classList.add('active')
+			}
+		})
+	})
+
+	// Привязка клика к payment-methods (передадим this и аргумент)
+	document.querySelectorAll('.payment-method').forEach(pm => {
+		pm.addEventListener('click', function () {
+			const onclick = pm.getAttribute('onclick')
+			if (onclick) {
+				const m = onclick.match(/selectPaymentMethod\((['"])?([^)'" ]+)\1?\)/)
+				if (m && m[2]) selectPaymentMethod(m[2], pm)
+				else selectPaymentMethod(selectedPaymentMethod, pm)
+			} else {
+				selectPaymentMethod(selectedPaymentMethod, pm)
+			}
+		})
+	})
+
+	// Привязка клика к package-option (обычные)
+	document
+		.querySelectorAll('#regularPackages .package-option')
+		.forEach((pkg, idx) => {
+			pkg.addEventListener('click', function () {
+				// Попытаемся прочитать onclick аргумент
+				const onclick = pkg.getAttribute('onclick')
+				let arg = idx + 1
+				if (onclick) {
+					const m = onclick.match(/selectPackage\((['"])?([^)'" ]+)\1?\)/)
+					if (m && m[2]) arg = parseInt(m[2], 10) || arg
+				}
+				selectPackage(arg, pkg)
+			})
+		})
+
+	// Привязка клика к stars-пакетам
+	document
+		.querySelectorAll('#starsPackages .package-option')
+		.forEach((pkg, idx) => {
+			pkg.addEventListener('click', function () {
+				const onclick = pkg.getAttribute('onclick')
+				let arg = idx + 1
+				if (onclick) {
+					const m = onclick.match(/selectStarsPackage\((['"])?([^)'" ]+)\1?\)/)
+					if (m && m[2]) arg = parseInt(m[2], 10) || arg
+				}
+				selectStarsPackage(arg, pkg)
+			})
+		})
+
+	// Установим оплату по умолчанию — попытаемся найти элемент с onclick содержащим 'sbp'
+	let defaultPaymentEl = findElementByOnclick(
+		'.payment-method',
+		'selectPaymentMethod',
+		'sbp'
+	)
+	if (!defaultPaymentEl)
+		defaultPaymentEl = document.querySelector('.payment-method')
+	if (defaultPaymentEl) selectPaymentMethod('sbp', defaultPaymentEl)
 })
