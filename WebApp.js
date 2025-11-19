@@ -15,6 +15,12 @@ function switchTab(tabName) {
 	}
 }
 
+// ОТКРЫТИЕ НУЖНОЙ ВКЛАДКИ ИЗ БОТА (НОВОЕ!)
+const urlParams = new URLSearchParams(window.location.search);
+const openTab = urlParams.get('tab');
+if (openTab === 'shop') switchTab('shop');
+if (openTab === 'referral') switchTab('referral');
+
 // Выбор пакета сообщений
 let selectedPackage = null
 let selectedPaymentMethod = 'sbp'
