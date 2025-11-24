@@ -1,21 +1,17 @@
 // Конфигурация
-const REWARD_AMOUNT = 2
+const REWARD_AMOUNT = 1
 
 // Элементы DOM
 let calendarDaysElement
-let claimButton
 let balanceAmountElement
-let currentStreakElement
 let totalClaimedElement
-let currentStreakStatElement
 let monthlyTotalElement
 
 // Данные пользователя
 let userData = {
 	balance: 0,
 	rewards: {},
-	currentStreak: 0,
-	lastClaimDate: null,
+	user_id: 0,
 }
 
 // Инициализация
@@ -29,11 +25,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function initializeElements() {
 	calendarDaysElement = document.getElementById('calendarDays')
-	claimButton = document.getElementById('claimButton')
 	balanceAmountElement = document.getElementById('balanceAmount')
-	currentStreakElement = document.getElementById('currentStreak')
 	totalClaimedElement = document.getElementById('totalClaimed')
-	currentStreakStatElement = document.getElementById('currentStreakStat')
 	monthlyTotalElement = document.getElementById('monthlyTotal')
 }
 
@@ -45,19 +38,10 @@ function loadUserData() {
 	userData.balance = parseInt(balance)
 	userData.user_id = user_id
 
+	// Загружаем из localStorage
 	const savedRewards = localStorage.getItem('dailyRewards')
 	if (savedRewards) {
 		userData.rewards = JSON.parse(savedRewards)
-	}
-
-	const savedStreak = localStorage.getItem('currentStreak')
-	if (savedStreak) {
-		userData.currentStreak = parseInt(savedStreak)
-	}
-
-	const savedLastClaim = localStorage.getItem('lastClaimDate')
-	if (savedLastClaim) {
-		userData.lastClaimDate = savedLastClaim
 	}
 }
 
@@ -66,6 +50,7 @@ function setupTelegramIntegration() {
 		Telegram.WebApp.ready()
 		Telegram.WebApp.expand()
 
+		// Обработчик данных от бота
 		Telegram.WebApp.onEvent('webAppDataReceived', event => {
 			if (event.data) {
 				try {
@@ -76,18 +61,6 @@ function setupTelegramIntegration() {
 				}
 			}
 		})
-
-		requestUserData()
-	}
-}
-
-function requestUserData() {
-	if (window.Telegram && Telegram.WebApp) {
-		Telegram.WebApp.sendData(
-			JSON.stringify({
-				action: 'get_user_data',
-			})
-		)
 	}
 }
 
@@ -97,18 +70,8 @@ function handleBotData(data) {
 			userData.balance = data.balance
 			updateUI()
 			break
-		case 'user_data':
-			if (data.balance !== undefined) {
-				userData.balance = data.balance
-				updateUI()
-			}
-			break
-		default:
-			console.log('Unknown action from bot:', data.action)
 	}
 }
-
-// ==================== ОСНОВНЫЕ ФУНКЦИИ КАЛЕНДАРЯ ====================
 
 function initializeCalendar() {
 	const now = new Date()
@@ -116,15 +79,11 @@ function initializeCalendar() {
 	const currentYear = now.getFullYear()
 	const today = now.getDate()
 
-	// Устанавливаем текущий месяц и год
-	document.getElementById('currentMonth').textContent =
-		getMonthName(currentMonth) + ' ' + currentYear
-
 	// Получаем первый день месяца и количество дней
 	const firstDay = new Date(currentYear, currentMonth, 1).getDay()
 	const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
 
-	// Создаем календарь с правильной сеткой
+	// Создаем календарь
 	let calendarHTML = ''
 
 	// Корректируем первый день недели (Пн = 0, Вс = 6)
@@ -150,22 +109,14 @@ function initializeCalendar() {
 		let dayClass = 'calendar-day'
 		if (isToday) dayClass += ' today'
 		if (isClaimed) dayClass += ' claimed'
-		if (isPast && !isToday) dayClass += ' past'
+		if (isPast && !isToday && !isClaimed && !isMissed) dayClass += ' past'
 		if (isFuture) dayClass += ' future'
 		if (isMissed) dayClass += ' missed'
-
-		let markerHTML = ''
-		if (isClaimed) {
-			markerHTML = '<div class="claimed-marker">✓</div>'
-		} else if (isMissed) {
-			markerHTML = '<div class="missed-marker">✗</div>'
-		}
 
 		calendarHTML += `
             <div class="${dayClass}" onclick="handleDayClick(${day}, ${isToday}, ${isClaimed})">
                 <div class="day-number">${day}</div>
                 <div class="day-reward">+${REWARD_AMOUNT}</div>
-                ${markerHTML}
             </div>
         `
 	}
@@ -189,35 +140,17 @@ function claimDailyReward() {
 
 	userData.rewards[todayKey] = true
 	userData.balance += REWARD_AMOUNT
-	updateStreak()
 	saveUserData()
 	updateUI()
 	showRewardAnimation()
 	sendDataToBot()
 
-	// Перерисовываем календарь чтобы обновить состояние
+	// Обновляем календарь чтобы сегодняшняя клетка стала серой
 	initializeCalendar()
-}
-
-function updateStreak() {
-	const today = new Date()
-	const yesterday = new Date(today)
-	yesterday.setDate(yesterday.getDate() - 1)
-	const yesterdayKey = formatDateKey(yesterday)
-
-	if (userData.lastClaimDate === yesterdayKey) {
-		userData.currentStreak++
-	} else {
-		userData.currentStreak = 1
-	}
-
-	userData.lastClaimDate = getTodayKey()
 }
 
 function updateUI() {
 	balanceAmountElement.textContent = userData.balance
-	currentStreakElement.textContent = userData.currentStreak
-	currentStreakStatElement.textContent = userData.currentStreak
 
 	const totalClaimed = Object.keys(userData.rewards).length * REWARD_AMOUNT
 	totalClaimedElement.textContent = totalClaimed
@@ -233,23 +166,10 @@ function updateUI() {
 	}).length
 
 	monthlyTotalElement.textContent = monthlyClaims * REWARD_AMOUNT
-
-	const todayKey = getTodayKey()
-	if (userData.rewards[todayKey]) {
-		claimButton.disabled = true
-		claimButton.textContent = '✅ Награда получена'
-	} else {
-		claimButton.disabled = false
-		claimButton.textContent = '🎁 Забрать сегодняшнюю награду'
-	}
 }
 
 function showRewardAnimation() {
-	claimButton.classList.add('reward-animation')
-	setTimeout(() => {
-		claimButton.classList.remove('reward-animation')
-	}, 600)
-	showMessage(`🎉 Получено ${REWARD_AMOUNT} сообщений!`, 'success')
+	showMessage(`🎉 Получено ${REWARD_AMOUNT} сообщение!`, 'success')
 }
 
 function showMessage(text, type) {
@@ -266,8 +186,6 @@ function showMessage(text, type) {
 
 function saveUserData() {
 	localStorage.setItem('dailyRewards', JSON.stringify(userData.rewards))
-	localStorage.setItem('currentStreak', userData.currentStreak.toString())
-	localStorage.setItem('lastClaimDate', userData.lastClaimDate)
 }
 
 function sendDataToBot() {
@@ -290,8 +208,6 @@ function sendDataToBot() {
 	}
 }
 
-// ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
-
 function getTodayKey() {
 	return formatDateKey(new Date())
 }
@@ -303,20 +219,8 @@ function formatDateKey(date) {
 	return `${year}-${month}-${day}`
 }
 
-function getMonthName(monthIndex) {
-	const months = [
-		'Январь',
-		'Февраль',
-		'Март',
-		'Апрель',
-		'Май',
-		'Июнь',
-		'Июль',
-		'Август',
-		'Сентябрь',
-		'Октябрь',
-		'Ноябрь',
-		'Декабрь',
-	]
-	return months[monthIndex]
+// Функция для обновления баланса из бота
+function updateBalanceFromBot(newBalance) {
+	userData.balance = newBalance
+	updateUI()
 }
