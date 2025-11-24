@@ -14,7 +14,7 @@
     <div class="header">
       <div class="header-center">
         <h1>🎁 Ежедневные награды</h1>
-        <p>Забирай 2 сообщения каждый день!</p>
+        <p>Забирай 1 сообщение каждый день!</p>
       </div>
     </div>
 
@@ -29,17 +29,9 @@
     <!-- Календарь наград -->
     <div class="card">
       <div class="card-header">
-        <div class="card-title">📅 Календарь наград</div>
+        <div class="card-title-center">📅 Календарь наград</div>
       </div>
 
-      <div class="calendar-header">
-        <div class="month-year" id="currentMonth">Ноябрь 2024</div>
-        <div class="streak-info">
-          <span id="currentStreak">0</span> дней подряд
-        </div>
-      </div>
-
-      <!-- Дни недели и календарь -->
       <div class="calendar-wrapper">
         <!-- Заголовки дней недели -->
         <div class="calendar-grid days-header">
@@ -57,10 +49,6 @@
           <!-- Дни будут заполнены через JavaScript -->
         </div>
       </div>
-
-      <button class="btn btn-primary" id="claimButton" onclick="claimDailyReward()">
-        🎁 Забрать сегодняшнюю награду
-      </button>
     </div>
 
     <!-- Статистика -->
@@ -73,10 +61,6 @@
         <div class="stat-item">
           <div class="stat-value" id="totalClaimed">0</div>
           <div class="stat-label">получено</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value" id="currentStreakStat">0</div>
-          <div class="stat-label">дней подряд</div>
         </div>
         <div class="stat-item">
           <div class="stat-value" id="monthlyTotal">0</div>
@@ -93,15 +77,15 @@
       <div class="rules-list">
         <div class="rule-item">
           <div class="rule-icon">🎁</div>
-          <div class="rule-text">2 бесплатных сообщения каждый день</div>
+          <div class="rule-text">Бесплатное сообщение каждый день</div>
         </div>
         <div class="rule-item">
           <div class="rule-icon">📅</div>
           <div class="rule-text">Награда доступна с 00:00 до 23:59</div>
         </div>
         <div class="rule-item">
-          <div class="rule-icon">⭐</div>
-          <div class="rule-text">Не пропускай дни для сохранения серии</div>
+          <div class="rule-icon">👆</div>
+          <div class="rule-text">Нажимайте на сегодняшнюю клетку для получения награды</div>
         </div>
       </div>
     </div>
