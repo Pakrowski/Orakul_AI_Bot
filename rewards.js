@@ -9,275 +9,312 @@ let monthlyTotalElement
 
 // Данные пользователя
 let userData = {
-    balance: 0,
-    rewards: {},
-    user_id: 0,
+	balance: 0,
+	rewards: {},
+	user_id: 0,
 }
 
 // Инициализация
 document.addEventListener('DOMContentLoaded', function () {
-    initializeElements()
-    loadUserData()
-    initializeCalendar()
-    updateUI()
-    setupTelegramIntegration()
+	initializeElements()
+	loadUserData()
+	initializeCalendar()
+	updateUI()
+	setupTelegramIntegration()
 })
 
 function initializeElements() {
-    calendarDaysElement = document.getElementById('calendarDays')
-    balanceAmountElement = document.getElementById('balanceAmount')
-    totalClaimedElement = document.getElementById('totalClaimed')
-    monthlyTotalElement = document.getElementById('monthlyTotal')
+	calendarDaysElement = document.getElementById('calendarDays')
+	balanceAmountElement = document.getElementById('balanceAmount')
+	totalClaimedElement = document.getElementById('totalClaimed')
+	monthlyTotalElement = document.getElementById('monthlyTotal')
 }
 
 function loadUserData() {
-    const urlParams = new URLSearchParams(window.location.search)
-    const balance = urlParams.get('balance') || '0'
-    const user_id = urlParams.get('user_id') || '0'
+	// Загружаем из localStorage
+	const savedRewards = localStorage.getItem('dailyRewards')
+	if (savedRewards) {
+		userData.rewards = JSON.parse(savedRewards)
+	}
 
-    userData.balance = parseInt(balance)
-    userData.user_id = user_id
-
-    // Загружаем из localStorage
-    const savedRewards = localStorage.getItem('dailyRewards')
-    if (savedRewards) {
-        userData.rewards = JSON.parse(savedRewards)
-    }
-    
-    console.log('👤 User data loaded:', userData)
+	console.log('👤 User data loaded:', userData)
 }
 
 function setupTelegramIntegration() {
-    if (window.Telegram && Telegram.WebApp) {
-        Telegram.WebApp.ready()
-        Telegram.WebApp.expand()
-        
-        console.log('✅ Telegram Web App initialized')
+	if (window.Telegram && Telegram.WebApp) {
+		Telegram.WebApp.ready()
+		Telegram.WebApp.expand()
 
-        // Обработчик данных от бота
-        Telegram.WebApp.onEvent('webAppDataReceived', event => {
-            console.log('📨 Received data from bot:', event)
-            if (event.data) {
-                try {
-                    const data = JSON.parse(event.data)
-                    handleBotData(data)
-                } catch (e) {
-                    console.error('Error parsing data from bot:', e)
-                }
-            }
-        })
-    } else {
-        console.log('❌ Telegram Web App not detected - running in browser mode')
-    }
+		console.log('✅ Telegram Web App initialized')
+
+		// ПОЛУЧАЕМ ДАННЫЕ ОТ БОТА ПРИ ЗАПУСКЕ
+		const initDataUnsafe = Telegram.WebApp.initDataUnsafe
+		console.log('📦 Init data from bot:', initDataUnsafe)
+
+		// Получаем user_id из данных бота
+		if (initDataUnsafe && initDataUnsafe.user) {
+			userData.user_id = initDataUnsafe.user.id.toString()
+			console.log('👤 User ID from bot:', userData.user_id)
+		}
+
+		// Получаем start_param если есть (например баланс)
+		if (Telegram.WebApp.startParam) {
+			const startParams = new URLSearchParams(Telegram.WebApp.startParam)
+			const balance = startParams.get('balance')
+			if (balance) {
+				userData.balance = parseInt(balance)
+				console.log('💰 Balance from start param:', userData.balance)
+			}
+		}
+
+		// Обработчик данных от бота
+		Telegram.WebApp.onEvent('webAppDataReceived', event => {
+			console.log('📨 Received data from bot:', event)
+			if (event.data) {
+				try {
+					const data = JSON.parse(event.data)
+					handleBotData(data)
+				} catch (e) {
+					console.error('Error parsing data from bot:', e)
+				}
+			}
+		})
+
+		// Дополнительный обработчик сообщений
+		window.addEventListener('message', function (event) {
+			console.log('📨 Message event from bot:', event.data)
+			if (event.data && typeof event.data === 'object' && event.data.action) {
+				handleBotData(event.data)
+			}
+		})
+	} else {
+		console.log('❌ Telegram Web App not detected - running in browser mode')
+		// Для тестирования в браузере
+		const urlParams = new URLSearchParams(window.location.search)
+		userData.user_id = urlParams.get('user_id') || 'test_user_123'
+		userData.balance = parseInt(urlParams.get('balance')) || 0
+	}
 }
 
 function handleBotData(data) {
-    console.log('🤖 Handling bot data:', data)
-    switch (data.action) {
-        case 'update_balance':
-            userData.balance = data.balance
-            updateUI()
-            break
-    }
+	console.log('🤖 Handling bot data:', data)
+	switch (data.action) {
+		case 'update_balance':
+			userData.balance = data.balance
+			updateUI()
+			showMessage(`Баланс обновлен: ${data.balance} сообщений`, 'success')
+			break
+		case 'reward_confirmed':
+			userData.balance = data.new_balance
+			updateUI()
+			showMessage(
+				`Награда подтверждена! Баланс: ${data.new_balance}`,
+				'success'
+			)
+			break
+	}
 }
 
 function initializeCalendar() {
-    const now = new Date()
-    const currentMonth = now.getMonth()
-    const currentYear = now.getFullYear()
-    const today = now.getDate()
+	const now = new Date()
+	const currentMonth = now.getMonth()
+	const currentYear = now.getFullYear()
+	const today = now.getDate()
 
-    // Получаем первый день месяца и количество дней
-    const firstDay = new Date(currentYear, currentMonth, 1).getDay()
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
+	// Получаем первый день месяца и количество дней
+	const firstDay = new Date(currentYear, currentMonth, 1).getDay()
+	const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
 
-    // Создаем календарь
-    let calendarHTML = ''
+	// Создаем календарь
+	let calendarHTML = ''
 
-    // Корректируем первый день недели (Пн = 0, Вс = 6)
-    const startOffset = firstDay === 0 ? 6 : firstDay - 1
+	// Корректируем первый день недели (Пн = 0, Вс = 6)
+	const startOffset = firstDay === 0 ? 6 : firstDay - 1
 
-    // Пустые ячейки для первого дня недели
-    for (let i = 0; i < startOffset; i++) {
-        calendarHTML += '<div class="calendar-day empty"></div>'
-    }
+	// Пустые ячейки для первого дня недели
+	for (let i = 0; i < startOffset; i++) {
+		calendarHTML += '<div class="calendar-day empty"></div>'
+	}
 
-    // Дни месяца
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dateKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-        const isToday = day === today
-        const isPast = day < today
-        const isFuture = day > today
-        const isClaimed = userData.rewards[dateKey] === true
-        const isMissed = isPast && !isClaimed && !isToday
+	// Дни месяца
+	for (let day = 1; day <= daysInMonth; day++) {
+		const dateKey = `${currentYear}-${String(currentMonth + 1).padStart(
+			2,
+			'0'
+		)}-${String(day).padStart(2, '0')}`
+		const isToday = day === today
+		const isPast = day < today
+		const isFuture = day > today
+		const isClaimed = userData.rewards[dateKey] === true
+		const isMissed = isPast && !isClaimed && !isToday
 
-        let dayClass = 'calendar-day'
-        if (isToday) dayClass += ' today'
-        if (isClaimed) dayClass += ' claimed'
-        if (isPast && !isToday && !isClaimed && !isMissed) dayClass += ' past'
-        if (isFuture) dayClass += ' future'
-        if (isMissed) dayClass += ' missed'
+		let dayClass = 'calendar-day'
+		if (isToday) dayClass += ' today'
+		if (isClaimed) dayClass += ' claimed'
+		if (isPast && !isToday && !isClaimed && !isMissed) dayClass += ' past'
+		if (isFuture) dayClass += ' future'
+		if (isMissed) dayClass += ' missed'
 
-        calendarHTML += `
+		calendarHTML += `
             <div class="${dayClass}" onclick="handleDayClick(${day}, ${isToday}, ${isClaimed})">
                 <div class="day-number">${day}</div>
                 <div class="day-reward">+${REWARD_AMOUNT}</div>
             </div>
         `
-    }
+	}
 
-    calendarDaysElement.innerHTML = calendarHTML
-    console.log('📅 Calendar initialized')
+	calendarDaysElement.innerHTML = calendarHTML
+	console.log('📅 Calendar initialized')
 }
 
 function handleDayClick(day, isToday, isClaimed) {
-    console.log(`🎯 Day clicked: ${day}, isToday: ${isToday}, isClaimed: ${isClaimed}`)
-    if (!isToday || isClaimed) return
-    claimDailyReward()
+	console.log(
+		`🎯 Day clicked: ${day}, isToday: ${isToday}, isClaimed: ${isClaimed}`
+	)
+	if (!isToday || isClaimed) return
+	claimDailyReward()
 }
 
 function claimDailyReward() {
-    const now = new Date()
-    const todayKey = getTodayKey()
-    
-    console.log('🎯 Claiming reward for:', todayKey)
-    console.log('📊 Current rewards:', userData.rewards)
-    console.log('👤 User ID:', userData.user_id)
-    console.log('💫 Current balance:', userData.balance)
+	const now = new Date()
+	const todayKey = getTodayKey()
 
-    if (userData.rewards[todayKey]) {
-        console.log('❌ Reward already claimed today')
-        showMessage('Сегодняшняя награда уже получена!', 'info')
-        return
-    }
+	console.log('🎯 Claiming reward for:', todayKey)
+	console.log('📊 Current rewards:', userData.rewards)
+	console.log('👤 User ID:', userData.user_id)
+	console.log('💫 Current balance:', userData.balance)
 
-    userData.rewards[todayKey] = true
-    userData.balance += REWARD_AMOUNT
-    saveUserData()
-    updateUI()
-    showRewardAnimation()
-    
-    console.log('🔄 Calling sendDataToBot...')
-    sendDataToBot()
+	if (userData.rewards[todayKey]) {
+		console.log('❌ Reward already claimed today')
+		showMessage('Сегодняшняя награда уже получена!', 'info')
+		return
+	}
 
-    // Обновляем календарь чтобы сегодняшняя клетка стала серой
-    setTimeout(() => {
-        initializeCalendar()
-    }, 1000)
+	userData.rewards[todayKey] = true
+	userData.balance += REWARD_AMOUNT
+	saveUserData()
+	updateUI()
+	showRewardAnimation()
+
+	console.log('🔄 Calling sendDataToBot...')
+	sendDataToBot()
+
+	// Обновляем календарь чтобы сегодняшняя клетка стала серой
+	setTimeout(() => {
+		initializeCalendar()
+	}, 1000)
 }
 
 function updateUI() {
-    balanceAmountElement.textContent = userData.balance
+	balanceAmountElement.textContent = userData.balance
 
-    const totalClaimed = Object.keys(userData.rewards).length * REWARD_AMOUNT
-    totalClaimedElement.textContent = totalClaimed
+	const totalClaimed = Object.keys(userData.rewards).length * REWARD_AMOUNT
+	totalClaimedElement.textContent = totalClaimed
 
-    const currentMonth = new Date().getMonth()
-    const currentYear = new Date().getFullYear()
-    const monthlyClaims = Object.keys(userData.rewards).filter(date => {
-        const dateObj = new Date(date)
-        return (
-            dateObj.getMonth() === currentMonth &&
-            dateObj.getFullYear() === currentYear
-        )
-    }).length
+	const currentMonth = new Date().getMonth()
+	const currentYear = new Date().getFullYear()
+	const monthlyClaims = Object.keys(userData.rewards).filter(date => {
+		const dateObj = new Date(date)
+		return (
+			dateObj.getMonth() === currentMonth &&
+			dateObj.getFullYear() === currentYear
+		)
+	}).length
 
-    monthlyTotalElement.textContent = monthlyClaims * REWARD_AMOUNT
-    
-    console.log('📊 UI updated - Balance:', userData.balance, 'Total claimed:', totalClaimed)
+	monthlyTotalElement.textContent = monthlyClaims * REWARD_AMOUNT
+
+	console.log(
+		'📊 UI updated - Balance:',
+		userData.balance,
+		'Total claimed:',
+		totalClaimed
+	)
 }
 
 function showRewardAnimation() {
-    showMessage(`🎉 Получено ${REWARD_AMOUNT} сообщение!`, 'success')
+	showMessage(`🎉 Получено ${REWARD_AMOUNT} сообщение!`, 'success')
 }
 
 function showMessage(text, type) {
-    console.log('💬 Showing message:', text)
-    if (window.Telegram && Telegram.WebApp) {
-        Telegram.WebApp.showPopup({
-            title: type === 'success' ? 'Успешно!' : 'Информация',
-            message: text,
-            buttons: [{ type: 'default', text: 'OK' }],
-        })
-    } else {
-        alert(text)
-    }
+	console.log('💬 Showing message:', text)
+	if (window.Telegram && Telegram.WebApp) {
+		Telegram.WebApp.showPopup({
+			title: type === 'success' ? 'Успешно!' : 'Информация',
+			message: text,
+			buttons: [{ type: 'default', text: 'OK' }],
+		})
+	} else {
+		alert(text)
+	}
 }
 
 function saveUserData() {
-    localStorage.setItem('dailyRewards', JSON.stringify(userData.rewards))
-    console.log('💾 User data saved to localStorage')
+	localStorage.setItem('dailyRewards', JSON.stringify(userData.rewards))
+	console.log('💾 User data saved to localStorage')
 }
 
 function sendDataToBot() {
-    // Создаем JSON строку вручную, чтобы избежать проблем с кодировкой
-    const jsonData = `{
-        "action": "daily_reward_claimed",
-        "amount": 1,
-        "new_balance": ${userData.balance},
-        "date": "${getTodayKey()}",
-        "user_id": "${userData.user_id}"
-    }`;
-    
-    console.log('📤 Sending JSON:', jsonData);
-    
-    // Проверяем что JSON валидный
-    try {
-        JSON.parse(jsonData);
-        console.log('✅ JSON is valid');
-    } catch (e) {
-        console.error('❌ Invalid JSON:', e);
-        return;
-    }
-    
-    if (window.Telegram && Telegram.WebApp) {
-        try {
-            console.log('🔄 Sending to Telegram...');
-            
-            // Отправляем данные
-            Telegram.WebApp.sendData(jsonData);
-            console.log('✅ Data sent to bot');
-            
-        } catch (e) {
-            console.error('❌ Send error:', e);
-        }
-    } else {
-        // Для тестирования в браузере
-        console.log('🌐 Browser mode - would send:', jsonData);
-        alert(`🎉 Награда получена! +1 сообщение\n${jsonData}`);
-    }
+	const data = {
+		action: 'daily_reward_claimed',
+		amount: REWARD_AMOUNT,
+		new_balance: userData.balance,
+		date: getTodayKey(),
+		user_id: userData.user_id,
+	}
+
+	console.log('📤 Sending data to bot:', data)
+
+	if (window.Telegram && Telegram.WebApp) {
+		try {
+			// ОСНОВНОЙ СПОСОБ ОТПРАВКИ
+			Telegram.WebApp.sendData(JSON.stringify(data))
+			console.log('✅ Data sent to bot via sendData')
+
+			// ЗАКРЫВАЕМ WEB APP ПОСЛЕ ОТПРАВКИ
+			setTimeout(() => {
+				Telegram.WebApp.close()
+				console.log('🔴 Web App closed')
+			}, 2000)
+		} catch (e) {
+			console.error('❌ Send error:', e)
+		}
+	} else {
+		// Для тестирования в браузере
+		console.log('🌐 Browser mode - would send:', data)
+		alert(`🎉 Награда получена! +1 сообщение\n${JSON.stringify(data, null, 2)}`)
+	}
 }
 
 function getTodayKey() {
-    return formatDateKey(new Date())
+	return formatDateKey(new Date())
 }
 
 function formatDateKey(date) {
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
+	const year = date.getFullYear()
+	const month = String(date.getMonth() + 1).padStart(2, '0')
+	const day = String(date.getDate()).padStart(2, '0')
+	return `${year}-${month}-${day}`
 }
 
 // Функция для обновления баланса из бота
 function updateBalanceFromBot(newBalance) {
-    console.log('🔄 Updating balance from bot:', newBalance)
-    userData.balance = newBalance
-    updateUI()
+	console.log('🔄 Updating balance from bot:', newBalance)
+	userData.balance = newBalance
+	updateUI()
 }
 
 // Глобальные функции для отладки
-window.debugRewards = function() {
-    console.log('🐛 Debug info:', userData)
-    console.log('📅 Today key:', getTodayKey())
-    console.log('💾 LocalStorage:', localStorage.getItem('dailyRewards'))
+window.debugRewards = function () {
+	console.log('🐛 Debug info:', userData)
+	console.log('📅 Today key:', getTodayKey())
+	console.log('💾 LocalStorage:', localStorage.getItem('dailyRewards'))
 }
 
-window.clearRewardsData = function() {
-    localStorage.removeItem('dailyRewards')
-    userData.rewards = {}
-    userData.balance = 0
-    updateUI()
-    initializeCalendar()
-    console.log('🧹 Rewards data cleared')
+window.clearRewardsData = function () {
+	localStorage.removeItem('dailyRewards')
+	userData.rewards = {}
+	userData.balance = 0
+	updateUI()
+	initializeCalendar()
+	console.log('🧹 Rewards data cleared')
 }
