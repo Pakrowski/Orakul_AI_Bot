@@ -66,13 +66,6 @@ function setupTelegramIntegration() {
                 }
             }
         })
-        
-        // Также слушаем сообщения от родительского окна
-        window.addEventListener('message', function(event) {
-            if (event.data && event.data.type === 'telegram_web_app_data') {
-                console.log('📨 Received data via postMessage:', event.data)
-            }
-        })
     } else {
         console.log('❌ Telegram Web App not detected - running in browser mode')
     }
@@ -225,80 +218,37 @@ function sendDataToBot() {
         user_id: userData.user_id,
     };
     
-    console.log('📤 Sending data to bot:', data)
+    console.log('📤 Sending data to bot:', data);
+    
+    // Правильно форматируем JSON
+    const jsonData = JSON.stringify(data);
+    console.log('📋 JSON data:', jsonData);
     
     if (window.Telegram && Telegram.WebApp) {
         try {
             // Способ 1 - основной
-            console.log('🔄 Trying Telegram.WebApp.sendData...')
-            Telegram.WebApp.sendData(JSON.stringify(data))
-            console.log('✅ Data sent via Telegram.WebApp.sendData')
+            console.log('🔄 Trying Telegram.WebApp.sendData...');
+            Telegram.WebApp.sendData(jsonData);
+            console.log('✅ Data sent via Telegram.WebApp.sendData');
             
             // Способ 2 - через 500ms на всякий случай
             setTimeout(() => {
                 try {
-                    console.log('🔄 Sending data again via timeout...')
-                    Telegram.WebApp.sendData(JSON.stringify(data))
-                    console.log('✅ Data sent again via timeout')
+                    console.log('🔄 Sending data again via timeout...');
+                    Telegram.WebApp.sendData(jsonData);
+                    console.log('✅ Data sent again via timeout');
                 } catch (e) {
-                    console.error('❌ Error in timeout send:', e)
+                    console.error('❌ Error in timeout send:', e);
                 }
-            }, 500)
-            
-            // Способ 3 - через 1000ms третий раз
-            setTimeout(() => {
-                try {
-                    console.log('🔄 Sending data third time...')
-                    Telegram.WebApp.sendData(JSON.stringify(data))
-                    console.log('✅ Data sent third time')
-                } catch (e) {
-                    console.error('❌ Error in third send:', e)
-                }
-            }, 1000)
+            }, 500);
             
         } catch (e) {
-            console.error('❌ Error sending data:', e)
-            // Пробуем альтернативные методы
-            sendDataAlternative(data)
+            console.error('❌ Error sending data:', e);
         }
     } else {
-        console.log('❌ Telegram Web App not available - running in browser mode')
+        console.log('❌ Telegram Web App not available - running in browser mode');
         // Для тестирования вне Telegram
-        alert(`🎉 Награда получена! +${REWARD_AMOUNT} сообщение\nДанные: ${JSON.stringify(data)}`)
-    }
-}
-
-function sendDataAlternative(data) {
-    console.log('🔄 Trying alternative send methods...')
-    
-    try {
-        // Способ 1 - через postMessage
-        if (window.parent !== window) {
-            window.parent.postMessage({
-                type: 'telegram_web_app_data',
-                data: JSON.stringify(data)
-            }, '*')
-            console.log('✅ Data sent via postMessage')
-        }
-        
-        // Способ 2 - через событие
-        const event = new CustomEvent('telegram_web_app_data', { 
-            detail: JSON.stringify(data) 
-        })
-        window.dispatchEvent(event)
-        console.log('✅ Data sent via custom event')
-        
-        // Способ 3 - через iframe
-        if (window.parent && window.parent !== window) {
-            window.parent.postMessage({
-                action: 'web_app_data',
-                data: JSON.stringify(data)
-            }, '*')
-            console.log('✅ Data sent via iframe postMessage')
-        }
-        
-    } catch (e) {
-        console.error('❌ All alternative methods failed:', e)
+        alert(`🎉 Награда получена! +${REWARD_AMOUNT} сообщение\nДанные: ${jsonData}`);
     }
 }
 
