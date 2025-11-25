@@ -210,45 +210,55 @@ function saveUserData() {
 }
 
 function sendDataToBot() {
+    // Создаем данные максимально просто
     const data = {
-        action: 'daily_reward_claimed',
-        amount: REWARD_AMOUNT,
+        action: "daily_reward_claimed",
+        amount: 1,
         new_balance: userData.balance,
         date: getTodayKey(),
-        user_id: userData.user_id,
+        user_id: userData.user_id.toString()
     };
     
-    console.log('📤 Sending data to bot:', data);
+    console.log('📤 Data to send:', data);
     
-    // Правильно форматируем JSON
-    const jsonData = JSON.stringify(data);
-    console.log('📋 JSON data:', jsonData);
+    // Используем самый простой способ создания JSON
+    let jsonString;
+    try {
+        jsonString = JSON.stringify(data);
+        console.log('📋 JSON.stringify result:', jsonString);
+    } catch (e) {
+        console.error('❌ JSON.stringify error:', e);
+        // Создаем JSON вручную если автоматический не работает
+        jsonString = `{"action":"daily_reward_claimed","amount":1,"new_balance":${userData.balance},"date":"${getTodayKey()}","user_id":"${userData.user_id}"}`;
+        console.log('📋 Manual JSON:', jsonString);
+    }
     
     if (window.Telegram && Telegram.WebApp) {
         try {
-            // Способ 1 - основной
-            console.log('🔄 Trying Telegram.WebApp.sendData...');
-            Telegram.WebApp.sendData(jsonData);
-            console.log('✅ Data sent via Telegram.WebApp.sendData');
+            console.log('🔄 Sending via Telegram WebApp...');
             
-            // Способ 2 - через 500ms на всякий случай
+            // Основная отправка
+            Telegram.WebApp.sendData(jsonString);
+            
+            // Дублируем отправку через 200ms
             setTimeout(() => {
                 try {
-                    console.log('🔄 Sending data again via timeout...');
-                    Telegram.WebApp.sendData(jsonData);
-                    console.log('✅ Data sent again via timeout');
+                    Telegram.WebApp.sendData(jsonString);
+                    console.log('✅ Duplicate sent');
                 } catch (e) {
-                    console.error('❌ Error in timeout send:', e);
+                    console.error('❌ Duplicate send failed:', e);
                 }
-            }, 500);
+            }, 200);
+            
+            console.log('✅ Data sent successfully');
             
         } catch (e) {
-            console.error('❌ Error sending data:', e);
+            console.error('❌ Telegram send error:', e);
         }
     } else {
-        console.log('❌ Telegram Web App not available - running in browser mode');
-        // Для тестирования вне Telegram
-        alert(`🎉 Награда получена! +${REWARD_AMOUNT} сообщение\nДанные: ${jsonData}`);
+        // Для тестирования в браузере
+        console.log('🌐 Browser mode - would send:', jsonString);
+        alert(`🎉 Награда получена! +1 сообщение\n${jsonString}`);
     }
 }
 
