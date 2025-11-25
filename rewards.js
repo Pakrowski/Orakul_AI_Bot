@@ -210,55 +210,41 @@ function saveUserData() {
 }
 
 function sendDataToBot() {
-    // Создаем данные максимально просто
-    const data = {
-        action: "daily_reward_claimed",
-        amount: 1,
-        new_balance: userData.balance,
-        date: getTodayKey(),
-        user_id: userData.user_id.toString()
-    };
+    // Создаем JSON строку вручную, чтобы избежать проблем с кодировкой
+    const jsonData = `{
+        "action": "daily_reward_claimed",
+        "amount": 1,
+        "new_balance": ${userData.balance},
+        "date": "${getTodayKey()}",
+        "user_id": "${userData.user_id}"
+    }`;
     
-    console.log('📤 Data to send:', data);
+    console.log('📤 Sending JSON:', jsonData);
     
-    // Используем самый простой способ создания JSON
-    let jsonString;
+    // Проверяем что JSON валидный
     try {
-        jsonString = JSON.stringify(data);
-        console.log('📋 JSON.stringify result:', jsonString);
+        JSON.parse(jsonData);
+        console.log('✅ JSON is valid');
     } catch (e) {
-        console.error('❌ JSON.stringify error:', e);
-        // Создаем JSON вручную если автоматический не работает
-        jsonString = `{"action":"daily_reward_claimed","amount":1,"new_balance":${userData.balance},"date":"${getTodayKey()}","user_id":"${userData.user_id}"}`;
-        console.log('📋 Manual JSON:', jsonString);
+        console.error('❌ Invalid JSON:', e);
+        return;
     }
     
     if (window.Telegram && Telegram.WebApp) {
         try {
-            console.log('🔄 Sending via Telegram WebApp...');
+            console.log('🔄 Sending to Telegram...');
             
-            // Основная отправка
-            Telegram.WebApp.sendData(jsonString);
-            
-            // Дублируем отправку через 200ms
-            setTimeout(() => {
-                try {
-                    Telegram.WebApp.sendData(jsonString);
-                    console.log('✅ Duplicate sent');
-                } catch (e) {
-                    console.error('❌ Duplicate send failed:', e);
-                }
-            }, 200);
-            
-            console.log('✅ Data sent successfully');
+            // Отправляем данные
+            Telegram.WebApp.sendData(jsonData);
+            console.log('✅ Data sent to bot');
             
         } catch (e) {
-            console.error('❌ Telegram send error:', e);
+            console.error('❌ Send error:', e);
         }
     } else {
         // Для тестирования в браузере
-        console.log('🌐 Browser mode - would send:', jsonString);
-        alert(`🎉 Награда получена! +1 сообщение\n${jsonString}`);
+        console.log('🌐 Browser mode - would send:', jsonData);
+        alert(`🎉 Награда получена! +1 сообщение\n${jsonData}`);
     }
 }
 
