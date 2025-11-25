@@ -257,7 +257,7 @@ function sendDataToBot() {
 	const data = {
 		action: 'daily_reward_claimed',
 		amount: REWARD_AMOUNT,
-		new_balance: userData.balance,
+		new_balance: userData.balance, // Исправлено: new_balance вместо new balance
 		date: getTodayKey(),
 		user_id: userData.user_id,
 	}
@@ -266,17 +266,21 @@ function sendDataToBot() {
 
 	if (window.Telegram && Telegram.WebApp) {
 		try {
-			// ОСНОВНОЙ СПОСОБ ОТПРАВКИ
+			// ПРАВИЛЬНЫЙ формат отправки
 			Telegram.WebApp.sendData(JSON.stringify(data))
 			console.log('✅ Data sent to bot via sendData')
 
-			// ЗАКРЫВАЕМ WEB APP ПОСЛЕ ОТПРАВКИ
+			// ЗАКРЫВАЕМ WEB APP
 			setTimeout(() => {
-				Telegram.WebApp.close()
-				console.log('🔴 Web App closed')
+				if (Telegram.WebApp && Telegram.WebApp.close) {
+					Telegram.WebApp.close()
+					console.log('🔴 Web App closed')
+				}
 			}, 2000)
 		} catch (e) {
 			console.error('❌ Send error:', e)
+			// Показываем сообщение об ошибке
+			showMessage('Ошибка отправки данных. Попробуйте еще раз.', 'info')
 		}
 	} else {
 		// Для тестирования в браузере
@@ -317,4 +321,49 @@ window.clearRewardsData = function () {
 	updateUI()
 	initializeCalendar()
 	console.log('🧹 Rewards data cleared')
+}
+
+// Функция для принудительного сброса сегодняшней награды
+window.resetTodayReward = function () {
+	const todayKey = getTodayKey()
+	console.log('🔄 Resetting reward for today:', todayKey)
+
+	if (userData.rewards[todayKey]) {
+		delete userData.rewards[todayKey]
+		userData.balance = Math.max(0, userData.balance - 1)
+		saveUserData()
+		updateUI()
+		initializeCalendar()
+		console.log('✅ Today reward reset')
+		alert('✅ Награда за сегодня сброшена! Можете забрать снова.')
+	} else {
+		console.log('ℹ️ No reward claimed today')
+		alert('ℹ️ Награда за сегодня еще не была получена.')
+	}
+}
+
+// Функция для тестирования отправки данных
+window.testSendData = function () {
+	console.log('🧪 Testing data send...')
+
+	// Имитируем получение награды
+	const todayKey = getTodayKey()
+	userData.rewards[todayKey] = true
+	userData.balance += 1
+
+	console.log('📤 Test data:', {
+		action: 'daily_reward_claimed',
+		amount: 1,
+		new_balance: userData.balance,
+		date: todayKey,
+		user_id: userData.user_id,
+	})
+
+	// Отправляем тестовые данные
+	sendDataToBot()
+
+	// Возвращаем состояние
+	delete userData.rewards[todayKey]
+	userData.balance = Math.max(0, userData.balance - 1)
+	updateUI()
 }
