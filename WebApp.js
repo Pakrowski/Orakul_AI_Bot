@@ -481,14 +481,33 @@ function claimDailyReward(dateKey) {
 			})
 		)
 
-		// Показываем сообщение о обработке
+		// Показываем обработку
 		Telegram.WebApp.showPopup({
 			title: 'Получение награды',
 			message: 'Награда обрабатывается...',
 			buttons: [{ type: 'default', text: 'OK' }],
 		})
+
+		// Предполагаем успех и обновляем UI локально
+		userData.rewards[dateKey] = true
+		userData.balance += REWARD_AMOUNT
+		userData.rewardAvailable = false
+
+		// Обновляем визуалы
+		initializeCalendar()
+		updateBalanceDisplay()
+		updateRewardsStats()
+		updateRewardButton()
+
+		// Показываем успех
+		setTimeout(() => {
+			Telegram.WebApp.showAlert(`✅ Получено ${REWARD_AMOUNT} сообщение!`)
+		}, 500)
+
+		// Синхронизируем баланс с ботом (на случай ошибки)
+		setTimeout(updateBalanceFromBot, 1000)
 	} else {
-		// Режим тестирования в браузере
+		// Режим тестирования
 		simulateRewardClaim(dateKey)
 	}
 }
