@@ -87,12 +87,29 @@ body {
 }
 
 .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 16px;
 }
 
 .card-title {
   font-size: 18px;
   font-weight: 700;
+  color: #ffffff;
+}
+
+.card-badge {
+  background: #ffffff;
+  color: #000000;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.card-badge.claimed {
+  background: #666666;
   color: #ffffff;
 }
 
@@ -120,6 +137,208 @@ body {
   color: #888888;
 }
 
+/* Rewards Section - Black & White Theme */
+.rewards-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 20px;
+  margin-bottom: 0;
+}
+
+.reward-stat {
+  display: flex;
+  align-items: center;
+  background: #1a1a1a;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #333333;
+  gap: 10px;
+}
+
+.stat-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 2px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #888888;
+}
+
+/* Calendar - Black & White */
+.calendar-wrapper {
+  margin-bottom: 0;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.days-header {
+  margin-bottom: 12px;
+}
+
+.day-header {
+  text-align: center;
+  font-size: 12px;
+  color: #888888;
+  padding: 4px 2px;
+  font-weight: 600;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  background: #1a1a1a;
+  border: 2px solid #333333;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 4px;
+  min-height: 40px;
+}
+
+.calendar-day.empty {
+  background: transparent;
+  border: 2px solid transparent;
+  cursor: default;
+}
+
+.calendar-day.today {
+  border-color: #ffffff;
+  background: #2a2a2a;
+}
+
+.calendar-day.today.available {
+  animation: pulse-white 2s infinite;
+  border-color: #ffffff;
+  background: #1a1a1a;
+}
+
+.calendar-day.today.claimed {
+  border-color: #666666;
+  background: #2a2a2a;
+  cursor: default;
+}
+
+.calendar-day.claimed {
+  border-color: #666666;
+  background: #2a2a2a;
+  cursor: default;
+}
+
+.calendar-day.missed {
+  border-color: #666666;
+  background: #1a1a1a;
+  opacity: 0.5;
+  cursor: default;
+}
+
+.calendar-day.future {
+  border-color: #333333;
+  background: #1a1a1a;
+  opacity: 0.5;
+  cursor: default;
+}
+
+.calendar-day.past:not(.claimed):not(.missed):not(.today) {
+  border-color: #333333;
+  background: #1a1a1a;
+  cursor: default;
+}
+
+.day-number {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 2px;
+}
+
+.day-reward {
+  font-size: 9px;
+  color: #888888;
+  font-weight: 500;
+}
+
+/* Анимация пульсации для доступной награды */
+@keyframes pulse-white {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+    transform: scale(1);
+  }
+
+  50% {
+    box-shadow: 0 0 0 6px rgba(255, 255, 255, 0);
+    transform: scale(1.05);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    transform: scale(1);
+  }
+}
+
+/* Reward Button - Black & White */
+.btn-reward {
+  background: #ffffff;
+  color: #000000;
+  border: none;
+  border-radius: 12px;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  width: 100%;
+  display: block;
+  margin-top: 20px;
+  margin-bottom: 12px;
+}
+
+.btn-reward:hover {
+  background: #e6e6e6;
+}
+
+.btn-reward:disabled {
+  background: #666666;
+  color: #888888;
+  cursor: not-allowed;
+}
+
+.reward-message {
+  text-align: center;
+  font-size: 14px;
+  color: #ffffff;
+  min-height: 20px;
+}
+
+.reward-message.success {
+  color: #ffffff;
+}
+
+.reward-message.error {
+  color: #ffffff;
+}
+
 /* Buttons */
 .btn {
   padding: 16px 24px;
@@ -143,17 +362,6 @@ body {
   background: #e6e6e6;
 }
 
-.btn-premium {
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-  color: #000000;
-  font-weight: 700;
-}
-
-.btn-premium:hover {
-  background: linear-gradient(135deg, #e6c200 0%, #ffea00 100%);
-}
-
-/* Старая кнопка КУПИТЬ */
 .btn-beautiful {
   background: #ffffff;
   color: #000000;
@@ -229,8 +437,7 @@ body {
   margin-right: 12px;
 }
 
-/* Новый стиль радио-кнопок как на фото */
-.radio-button-new {
+.radio-dot {
   width: 20px;
   height: 20px;
   border: 2px solid #666666;
@@ -239,22 +446,23 @@ body {
   position: relative;
 }
 
-.payment-method.selected .radio-button-new,
-.package-option.selected .radio-button-new {
+.payment-method.selected .radio-dot,
+.package-option.selected .radio-dot {
   border-color: #ffffff;
   background: #ffffff;
 }
 
-.payment-method.selected .radio-button-new::after,
-.package-option.selected .radio-button-new::after {
-  content: "✓";
+.payment-method.selected .radio-dot::after,
+.package-option.selected .radio-dot::after {
+  content: "";
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #000000;
-  font-size: 12px;
-  font-weight: bold;
+  width: 8px;
+  height: 8px;
+  background: #000000;
+  border-radius: 50%;
 }
 
 .method-info {
@@ -332,6 +540,18 @@ body {
   color: #ffd700;
 }
 
+.stars-price {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.stars-icon {
+  font-size: 16px;
+  color: #ffd700;
+  filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5));
+}
+
 /* Email Section */
 .email-section {
   margin-bottom: 20px;
@@ -362,6 +582,10 @@ body {
   display: none;
 }
 
+.email-section.stars-hidden {
+  display: none;
+}
+
 /* Terms Notice */
 .terms-notice {
   text-align: center;
@@ -375,51 +599,7 @@ body {
   text-decoration: underline;
 }
 
-/* Скрываем email секцию для Stars */
-.email-section.stars-hidden {
-  display: none;
-}
-
-/* Premium */
-.premium-badge {
-  display: inline-block;
-  background: #ffd700;
-  color: #000000;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  margin-bottom: 12px;
-}
-
-.premium-features {
-  margin-bottom: 16px;
-}
-
-.feature {
-  font-size: 14px;
-  color: #ffffff;
-  margin-bottom: 8px;
-  padding-left: 16px;
-  position: relative;
-}
-
-.feature:before {
-  content: "✓";
-  position: absolute;
-  left: 0;
-  color: #ffd700;
-}
-
-.premium-price {
-  font-size: 18px;
-  font-weight: 700;
-  color: #ffffff;
-  text-align: center;
-  margin-bottom: 16px;
-}
-
-/* Referral */
+/* Referral Styles */
 .referral-hero {
   text-align: center;
   margin-bottom: 24px;
@@ -692,77 +872,6 @@ input:checked+.slider:before {
   color: #888888;
 }
 
-/* Legal Content */
-.legal-content {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #000000;
-  z-index: 1000;
-  padding: 16px;
-  overflow-y: auto;
-}
-
-.legal-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #333333;
-}
-
-.back-button {
-  background: none;
-  border: none;
-  color: #ffffff;
-  font-size: 24px;
-  cursor: pointer;
-  padding: 8px;
-  margin-right: 12px;
-}
-
-.legal-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #ffffff;
-}
-
-.legal-text-content {
-  color: #ffffff;
-}
-
-.legal-section {
-  margin-bottom: 24px;
-}
-
-.legal-section h3 {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 12px;
-  color: #ffffff;
-}
-
-.legal-section p {
-  font-size: 14px;
-  color: #cccccc;
-  margin-bottom: 12px;
-  line-height: 1.6;
-}
-
-.legal-list {
-  padding-left: 20px;
-  margin-bottom: 12px;
-}
-
-.legal-list li {
-  font-size: 14px;
-  color: #cccccc;
-  margin-bottom: 8px;
-  line-height: 1.6;
-}
-
 /* Tab Content */
 .tab-content {
   display: none;
@@ -790,51 +899,32 @@ input:checked+.slider:before {
   .balance-amount {
     font-size: 36px;
   }
-}
-/* Стиль радио-кнопок с дырочкой */
-.radio-dot {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #666666;
-  border-radius: 50%;
-  transition: all 0.3s ease;
-  position: relative;
-}
 
-.payment-method.selected .radio-dot,
-.package-option.selected .radio-dot {
-  border-color: #ffffff;
-  background: #ffffff;
-}
+  .calendar-day {
+    min-height: 36px;
+  }
 
-.payment-method.selected .radio-dot::after,
-.package-option.selected .radio-dot::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 8px;
-  height: 8px;
-  background: #000000;
-  border-radius: 50%;
-}
-/* Стиль для звезд как у конкурента */
-.stars-packages .package-price {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: #ffd700;
-}
+  .day-number {
+    font-size: 12px;
+  }
 
-.stars-price {
-  font-size: 16px;
-  font-weight: 700;
-  color: #ffffff;
-}
+  .day-reward {
+    font-size: 8px;
+  }
 
-.stars-icon {
-  font-size: 16px;
-  color: #ffd700;
-  filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5));
+  .rewards-stats {
+    gap: 8px;
+  }
+
+  .reward-stat {
+    padding: 10px;
+  }
+
+  .stat-value {
+    font-size: 16px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+  }
 }
