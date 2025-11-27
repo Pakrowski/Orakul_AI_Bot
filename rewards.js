@@ -31,6 +31,13 @@ function initializeElements() {
 }
 
 function loadUserData() {
+	const urlParams = new URLSearchParams(window.location.search)
+	const balance = urlParams.get('balance') || '0'
+	const user_id = urlParams.get('user_id') || '0'
+
+	userData.balance = parseInt(balance)
+	userData.user_id = user_id
+
 	// Загружаем из localStorage
 	const savedRewards = localStorage.getItem('dailyRewards')
 	if (savedRewards) {
@@ -47,26 +54,6 @@ function setupTelegramIntegration() {
 
 		console.log('✅ Telegram Web App initialized')
 
-		// ПОЛУЧАЕМ ДАННЫЕ ОТ БОТА ПРИ ЗАПУСКЕ
-		const initDataUnsafe = Telegram.WebApp.initDataUnsafe
-		console.log('📦 Init data from bot:', initDataUnsafe)
-
-		// Получаем user_id из данных бота
-		if (initDataUnsafe && initDataUnsafe.user) {
-			userData.user_id = initDataUnsafe.user.id.toString()
-			console.log('👤 User ID from bot:', userData.user_id)
-		}
-
-		// Получаем start_param если есть (например баланс)
-		if (Telegram.WebApp.startParam) {
-			const startParams = new URLSearchParams(Telegram.WebApp.startParam)
-			const balance = startParams.get('balance')
-			if (balance) {
-				userData.balance = parseInt(balance)
-				console.log('💰 Balance from start param:', userData.balance)
-			}
-		}
-
 		// Обработчик данных от бота
 		Telegram.WebApp.onEvent('webAppDataReceived', event => {
 			console.log('📨 Received data from bot:', event)
@@ -79,20 +66,8 @@ function setupTelegramIntegration() {
 				}
 			}
 		})
-
-		// Дополнительный обработчик сообщений
-		window.addEventListener('message', function (event) {
-			console.log('📨 Message event from bot:', event.data)
-			if (event.data && typeof event.data === 'object' && event.data.action) {
-				handleBotData(event.data)
-			}
-		})
 	} else {
 		console.log('❌ Telegram Web App not detected - running in browser mode')
-		// Для тестирования в браузере
-		const urlParams = new URLSearchParams(window.location.search)
-		userData.user_id = urlParams.get('user_id') || 'test_user_123'
-		userData.balance = parseInt(urlParams.get('balance')) || 0
 	}
 }
 
@@ -102,15 +77,6 @@ function handleBotData(data) {
 		case 'update_balance':
 			userData.balance = data.balance
 			updateUI()
-			showMessage(`Баланс обновлен: ${data.balance} сообщений`, 'success')
-			break
-		case 'reward_confirmed':
-			userData.balance = data.new_balance
-			updateUI()
-			showMessage(
-				`Награда подтверждена! Баланс: ${data.new_balance}`,
-				'success'
-			)
 			break
 	}
 }
@@ -254,38 +220,40 @@ function saveUserData() {
 }
 
 function sendDataToBot() {
-	const data = {
-		action: 'daily_reward_claimed',
-		amount: REWARD_AMOUNT,
-		new_balance: userData.balance, // Исправлено: new_balance вместо new balance
-		date: getTodayKey(),
-		user_id: userData.user_id,
-	}
+	// Создаем JSON строку вручную, чтобы избежать проблем с кодировкой
+	const jsonData = `{
+        "action": "daily_reward_claimed",
+        "amount": 1,
+        "new_balance": ${userData.balance},
+        "date": "${getTodayKey()}",
+        "user_id": "${userData.user_id}"
+    }`
 
-	console.log('📤 Sending data to bot:', data)
+	console.log('📤 Sending JSON:', jsonData)
+
+	// Проверяем что JSON валидный
+	try {
+		JSON.parse(jsonData)
+		console.log('✅ JSON is valid')
+	} catch (e) {
+		console.error('❌ Invalid JSON:', e)
+		return
+	}
 
 	if (window.Telegram && Telegram.WebApp) {
 		try {
-			// ПРАВИЛЬНЫЙ формат отправки
-			Telegram.WebApp.sendData(JSON.stringify(data))
-			console.log('✅ Data sent to bot via sendData')
+			console.log('🔄 Sending to Telegram...')
 
-			// ЗАКРЫВАЕМ WEB APP
-			setTimeout(() => {
-				if (Telegram.WebApp && Telegram.WebApp.close) {
-					Telegram.WebApp.close()
-					console.log('🔴 Web App closed')
-				}
-			}, 2000)
+			// Отправляем данные
+			Telegram.WebApp.sendData(jsonData)
+			console.log('✅ Data sent to bot')
 		} catch (e) {
 			console.error('❌ Send error:', e)
-			// Показываем сообщение об ошибке
-			showMessage('Ошибка отправки данных. Попробуйте еще раз.', 'info')
 		}
 	} else {
 		// Для тестирования в браузере
-		console.log('🌐 Browser mode - would send:', data)
-		alert(`🎉 Награда получена! +1 сообщение\n${JSON.stringify(data, null, 2)}`)
+		console.log('🌐 Browser mode - would send:', jsonData)
+		alert(`🎉 Награда получена! +1 сообщение\n${jsonData}`)
 	}
 }
 
@@ -323,47 +291,10 @@ window.clearRewardsData = function () {
 	console.log('🧹 Rewards data cleared')
 }
 
-// Функция для принудительного сброса сегодняшней награды
-window.resetTodayReward = function () {
-	const todayKey = getTodayKey()
-	console.log('🔄 Resetting reward for today:', todayKey)
 
-	if (userData.rewards[todayKey]) {
-		delete userData.rewards[todayKey]
-		userData.balance = Math.max(0, userData.balance - 1)
-		saveUserData()
-		updateUI()
-		initializeCalendar()
-		console.log('✅ Today reward reset')
-		alert('✅ Награда за сегодня сброшена! Можете забрать снова.')
-	} else {
-		console.log('ℹ️ No reward claimed today')
-		alert('ℹ️ Награда за сегодня еще не была получена.')
-	}
-}
 
-// Функция для тестирования отправки данных
-window.testSendData = function () {
-	console.log('🧪 Testing data send...')
 
-	// Имитируем получение награды
-	const todayKey = getTodayKey()
-	userData.rewards[todayKey] = true
-	userData.balance += 1
 
-	console.log('📤 Test data:', {
-		action: 'daily_reward_claimed',
-		amount: 1,
-		new_balance: userData.balance,
-		date: todayKey,
-		user_id: userData.user_id,
-	})
 
-	// Отправляем тестовые данные
-	sendDataToBot()
 
-	// Возвращаем состояние
-	delete userData.rewards[todayKey]
-	userData.balance = Math.max(0, userData.balance - 1)
-	updateUI()
-}
+
