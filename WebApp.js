@@ -1,3 +1,12 @@
+// Константы для наград
+const REWARD_AMOUNT = 1
+let userData = {
+	balance: 0,
+	user_id: 0,
+	rewards: {},
+	rewardAvailable: false,
+}
+
 // Переключение табов
 function switchTab(tabName) {
 	document.querySelectorAll('.tab-content').forEach(tab => {
@@ -12,14 +21,16 @@ function switchTab(tabName) {
 
 	if (tabName === 'referral') {
 		loadReferralData()
+	} else if (tabName === 'profile') {
+		initializeRewards()
 	}
 }
 
-// ОТКРЫТИЕ НУЖНОЙ ВКЛАДКИ ИЗ БОТА (НОВОЕ!)
-const urlParams = new URLSearchParams(window.location.search);
-const openTab = urlParams.get('tab');
-if (openTab === 'shop') switchTab('shop');
-if (openTab === 'referral') switchTab('referral');
+// ОТКРЫТИЕ НУЖНОЙ ВКЛАДКИ ИЗ БОТА
+const urlParams = new URLSearchParams(window.location.search)
+const openTab = urlParams.get('tab')
+if (openTab === 'shop') switchTab('shop')
+if (openTab === 'referral') switchTab('referral')
 
 // Выбор пакета сообщений
 let selectedPackage = null
@@ -246,44 +257,6 @@ function getPaymentMethodName(method) {
 	return methods[method] || method
 }
 
-// Активация подписки
-function subscribePremium() {
-	if (window.Telegram && Telegram.WebApp) {
-		Telegram.WebApp.showPopup(
-			{
-				title: 'Премиум подписка',
-				message:
-					'Активировать подписку "ОРАКУЛ ПРЕМИУМ" за 1 990 ₽ на 30 дней?',
-				buttons: [
-					{ id: 'confirm', type: 'default', text: 'Активировать' },
-					{ type: 'cancel', text: 'Отмена' },
-				],
-			},
-			function (buttonId) {
-				if (buttonId === 'confirm') {
-					// Отправляем данные о подписке в бот
-					Telegram.WebApp.sendData(
-						JSON.stringify({
-							action: 'subscribe_premium',
-							price: 1990,
-							duration: 30,
-						})
-					)
-
-					setTimeout(() => {
-						Telegram.WebApp.showAlert('Подписка успешно активирована!')
-						// Запрашиваем актуальный баланс у бота
-						setTimeout(updateBalanceFromBot, 1000)
-						switchTab('profile')
-					}, 1000)
-				}
-			}
-		)
-	} else {
-		alert('Для активации подписки используйте Telegram.')
-	}
-}
-
 // Загрузка реферальных данных
 function loadReferralData() {
 	if (window.Telegram && Telegram.WebApp) {
@@ -386,6 +359,8 @@ function handleBotData(data) {
 		switch (parsedData.action) {
 			case 'update_balance':
 				updateBalanceDisplay(parsedData.balance)
+				userData.balance = parsedData.balance
+				updateRewardsStats()
 				break
 			case 'update_referral_stats':
 				document.getElementById('referralsCount').textContent =
@@ -395,6 +370,7 @@ function handleBotData(data) {
 				break
 			case 'purchase_success':
 				updateBalanceDisplay(parsedData.new_balance)
+				userData.balance = parsedData.new_balance
 				if (window.Telegram && Telegram.WebApp) {
 					Telegram.WebApp.showAlert(
 						`Успешно! Баланс пополнен на ${parsedData.amount} сообщений.`
@@ -413,6 +389,216 @@ function handleBotData(data) {
 function startBalanceSync() {
 	// Синхронизируем баланс каждые 30 секунд
 	setInterval(updateBalanceFromBot, 30000)
+}
+
+// Инициализация наград
+function initializeRewards() {
+	updateBalanceDisplay(userData.balance)
+	initializeCalendar()
+	updateRewardsStats()
+	updateRewardButton()
+}
+
+// Обновление баланса
+function updateBalanceDisplay() {
+	const balanceElement = document.getElementById('balanceAmount')
+	if (balanceElement) {
+		balanceElement.textContent = userData.balance
+	}
+}
+
+// Инициализация календаря
+function initializeCalendar() {
+	const now = new Date()
+	const currentMonth = now.getMonth()
+	const currentYear = now.getFullYear()
+	const today = now.getDate()
+
+	// Получаем первый день месяца и количество дней
+	const firstDay = new Date(currentYear, currentMonth, 1).getDay()
+	const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
+
+	// Создаем календарь
+	let calendarHTML = ''
+
+	// Корректируем первый день недели (Пн = 0, Вс = 6)
+	const startOffset = firstDay === 0 ? 6 : firstDay - 1
+
+	// Пустые ячейки для первого дня недели
+	for (let i = 0; i < startOffset; i++) {
+		calendarHTML += '<div class="calendar-day empty"></div>'
+	}
+
+	// Дни месяца
+	for (let day = 1; day <= daysInMonth; day++) {
+		const dateKey = `${currentYear}-${String(currentMonth + 1).padStart(
+			2,
+			'0'
+		)}-${String(day).padStart(2, '0')}`
+		const isToday = day === today
+		const isPast = day < today
+		const isFuture = day > today
+		const isClaimed = userData.rewards[dateKey] === true
+		const isMissed = isPast && !isClaimed && !isToday
+		const isAvailable = isToday && !isClaimed && userData.rewardAvailable
+
+		let dayClass = 'calendar-day'
+		if (isToday) dayClass += ' today'
+		if (isClaimed) dayClass += ' claimed'
+		if (isAvailable) dayClass += ' available'
+		if (isPast && !isToday && !isClaimed && !isMissed) dayClass += ' past'
+		if (isFuture) dayClass += ' future'
+		if (isMissed) dayClass += ' missed'
+
+		calendarHTML += `
+            <div class="${dayClass}" onclick="handleDayClick(${day}, ${isToday}, ${isClaimed}, ${isAvailable}, '${dateKey}')">
+                <div class="day-number">${day}</div>
+                <div class="day-reward">+${REWARD_AMOUNT}</div>
+            </div>
+        `
+	}
+
+	const calendarDaysElement = document.getElementById('calendarDays')
+	if (calendarDaysElement) {
+		calendarDaysElement.innerHTML = calendarHTML
+	}
+}
+
+// Обработка клика по дню
+function handleDayClick(day, isToday, isClaimed, isAvailable, dateKey) {
+	if (!isToday || isClaimed || !isAvailable) return
+
+	claimDailyReward(dateKey)
+}
+
+// Получение награды
+function claimDailyReward(dateKey) {
+	if (window.Telegram && Telegram.WebApp) {
+		Telegram.WebApp.sendData(
+			JSON.stringify({
+				action: 'claim_daily_reward',
+				date: dateKey,
+			})
+		)
+
+		// Показываем сообщение о обработке
+		Telegram.WebApp.showPopup({
+			title: 'Получение награды',
+			message: 'Награда обрабатывается...',
+			buttons: [{ type: 'default', text: 'OK' }],
+		})
+	} else {
+		// Режим тестирования в браузере
+		simulateRewardClaim(dateKey)
+	}
+}
+
+// Симуляция получения награды (для тестирования)
+function simulateRewardClaim(dateKey) {
+	// Обновляем данные
+	userData.rewards[dateKey] = true
+	userData.balance += REWARD_AMOUNT
+	userData.rewardAvailable = false
+
+	// Сохраняем в localStorage
+	localStorage.setItem('dailyRewards', JSON.stringify(userData.rewards))
+
+	// Обновляем интерфейс
+	updateBalanceDisplay()
+	updateRewardsStats()
+	updateRewardButton()
+
+	// ПЕРЕСОЗДАЕМ КАЛЕНДАРЬ для обновления ячеек
+	initializeCalendar()
+
+	// Показываем сообщение об успехе
+	const messageElement = document.getElementById('rewardMessage')
+	if (messageElement) {
+		messageElement.textContent = `✅ Получено ${REWARD_AMOUNT} сообщение! Новый баланс: ${userData.balance}`
+		messageElement.className = 'reward-message success'
+
+		// Очищаем сообщение через 3 секунды
+		setTimeout(() => {
+			messageElement.textContent = ''
+		}, 3000)
+	}
+}
+
+// Обновление статистики наград
+function updateRewardsStats() {
+	const totalRewardsElement = document.getElementById('totalRewards')
+	const monthlyRewardsElement = document.getElementById('monthlyRewards')
+
+	if (totalRewardsElement && monthlyRewardsElement) {
+		const totalClaimed = Object.keys(userData.rewards).length
+		totalRewardsElement.textContent = totalClaimed
+
+		const currentMonth = new Date().getMonth()
+		const currentYear = new Date().getFullYear()
+		const monthlyClaims = Object.keys(userData.rewards).filter(date => {
+			const dateObj = new Date(date)
+			return (
+				dateObj.getMonth() === currentMonth &&
+				dateObj.getFullYear() === currentYear
+			)
+		}).length
+
+		monthlyRewardsElement.textContent = monthlyClaims
+	}
+}
+
+// Обновление кнопки получения награды
+function updateRewardButton() {
+	const claimButton = document.getElementById('claimRewardBtn')
+	const rewardBadge = document.getElementById('rewardBadge')
+	const today = new Date().toISOString().split('T')[0]
+
+	if (claimButton && rewardBadge) {
+		if (userData.rewards[today]) {
+			// Награда уже получена сегодня
+			claimButton.disabled = true
+			claimButton.textContent = '✅ Награда получена сегодня'
+			rewardBadge.textContent = '✅ Получено'
+			rewardBadge.className = 'card-badge claimed'
+		} else if (userData.rewardAvailable) {
+			// Награда доступна
+			claimButton.disabled = false
+			claimButton.textContent = '🎁 Забрать сегодняшнюю награду'
+			rewardBadge.textContent = '🎁 Доступно'
+			rewardBadge.className = 'card-badge'
+		} else {
+			// Награда недоступна
+			claimButton.disabled = true
+			claimButton.textContent = '⏳ Награда будет доступна завтра'
+			rewardBadge.textContent = '⏳ Завтра'
+			rewardBadge.className = 'card-badge claimed'
+		}
+	}
+}
+
+// Загрузка данных пользователя
+function loadUserData() {
+	const urlParams = new URLSearchParams(window.location.search)
+	const balance = urlParams.get('balance') || '0'
+	const user_id = urlParams.get('user_id') || '0'
+
+	userData.balance = parseInt(balance)
+	userData.user_id = user_id
+
+	// Загружаем из localStorage
+	const savedRewards = localStorage.getItem('dailyRewards')
+	if (savedRewards) {
+		userData.rewards = JSON.parse(savedRewards)
+	}
+
+	// Проверяем доступность награды
+	const today = new Date().toISOString().split('T')[0]
+	userData.rewardAvailable = !userData.rewards[today]
+
+	// Сохраняем в localStorage для тестирования
+	if (!window.Telegram || !Telegram.WebApp) {
+		localStorage.setItem('dailyRewards', JSON.stringify(userData.rewards))
+	}
 }
 
 // Инициализация Telegram Web App
@@ -438,6 +624,7 @@ if (window.Telegram && Telegram.WebApp) {
 		const balance = urlParams.get('balance')
 		if (balance) {
 			updateBalanceDisplay(balance)
+			userData.balance = parseInt(balance)
 		}
 
 		// Запрашиваем актуальный баланс у бота при загрузке
@@ -459,10 +646,15 @@ if (window.Telegram && Telegram.WebApp) {
 	const urlParams = new URLSearchParams(window.location.search)
 	const balance = urlParams.get('balance') || '5'
 	updateBalanceDisplay(balance)
+	userData.balance = parseInt(balance)
 }
 
-// Добавляем обработчик для валидации email в реальном времени
+// Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', function () {
+	loadUserData()
+	initializeRewards()
+
+	// Добавляем обработчик для валидации email в реальном времени
 	const emailInput = document.getElementById('emailInput')
 	if (emailInput) {
 		emailInput.addEventListener('input', handleEmailInput)
@@ -484,6 +676,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			)
 			const newBalance = currentBalance + 1
 			updateBalanceDisplay(newBalance)
+			userData.balance = newBalance
 			alert('Баланс синхронизирован (тестовый режим)')
 		}
 		document.querySelector('.balance-card').appendChild(syncButton)
