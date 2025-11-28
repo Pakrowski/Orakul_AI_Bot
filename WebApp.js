@@ -387,6 +387,7 @@ function handleBotData(data) {
 		console.error('Error parsing data from bot:', e)
 	}
 }
+
 // Функция для периодической синхронизации баланса
 function startBalanceSync() {
 	// Синхронизируем баланс каждые 30 секунд
@@ -483,6 +484,14 @@ function handleDayClick(day, isToday, isClaimed, isAvailable, dateKey) {
 // Получение награды
 function claimDailyReward(dateKey) {
 	if (window.Telegram && Telegram.WebApp) {
+		// Показываем сообщение о обработке
+		const messageElement = document.getElementById('rewardMessage')
+		if (messageElement) {
+			messageElement.textContent = '🔄 Получаем награду...'
+			messageElement.className = 'reward-message'
+		}
+
+		// Отправляем запрос на получение награды
 		Telegram.WebApp.sendData(
 			JSON.stringify({
 				action: 'claim_daily_reward',
@@ -490,12 +499,10 @@ function claimDailyReward(dateKey) {
 			})
 		)
 
-		// Показываем сообщение о обработке
-		Telegram.WebApp.showPopup({
-			title: 'Получение награды',
-			message: 'Награда обрабатывается...',
-			buttons: [{ type: 'default', text: 'OK' }],
-		})
+		// Закрываем веб-приложение через 2 секунды для синхронизации
+		setTimeout(() => {
+			Telegram.WebApp.close()
+		}, 2000)
 	} else {
 		// Режим тестирования в браузере
 		simulateRewardClaim(dateKey)
@@ -585,6 +592,90 @@ function updateRewardButton() {
 	}
 }
 
+// Функция для получения актуального баланса
+function refreshBalance() {
+	if (window.Telegram && Telegram.WebApp) {
+		Telegram.WebApp.sendData(
+			JSON.stringify({
+				action: 'get_balance',
+			})
+		)
+	} else {
+		// Для тестирования без Telegram
+		console.log('Запрос баланса (тестовый режим)')
+	}
+}
+
+// Функция для обработки успешного получения награды
+function handleRewardClaimSuccess(data) {
+	// Обновляем баланс
+	userData.balance = data.new_balance
+	updateBalanceDisplay()
+	
+	// Обновляем состояние награды
+	const today = new Date().toISOString().split('T')[0]
+	userData.rewards[today] = true
+	userData.rewardAvailable = false
+	
+	// Сохраняем в localStorage
+	localStorage.setItem('dailyRewards', JSON.stringify(userData.rewards))
+	
+	// Обновляем интерфейс
+	updateRewardsStats()
+	updateRewardButton()
+	initializeCalendar() // Перерисовываем календарь
+	
+	// Показываем сообщение об успехе
+	const messageElement = document.getElementById('rewardMessage')
+	if (messageElement) {
+		messageElement.textContent = `✅ Получено ${data.reward_amount} сообщение! Новый баланс: ${data.new_balance}`
+		messageElement.className = 'reward-message success'
+		
+		setTimeout(() => {
+			messageElement.textContent = ''
+		}, 3000)
+	}
+}
+
+// Функция для обновления всех данных
+function refreshAllData() {
+	const urlParams = new URLSearchParams(window.location.search)
+	const balance = urlParams.get('balance')
+	const rewardClaimed = urlParams.get('reward_claimed')
+	
+	if (balance) {
+		userData.balance = parseInt(balance)
+		updateBalanceDisplay()
+	}
+	
+	if (rewardClaimed === 'true') {
+		// Обновляем состояние награды
+		const today = new Date().toISOString().split('T')[0]
+		userData.rewards[today] = true
+		userData.rewardAvailable = false
+		localStorage.setItem('dailyRewards', JSON.stringify(userData.rewards))
+		
+		// Обновляем интерфейс
+		updateRewardsStats()
+		updateRewardButton()
+		initializeCalendar()
+		
+		// Показываем сообщение об успехе
+		const messageElement = document.getElementById('rewardMessage')
+		if (messageElement) {
+			messageElement.textContent = `✅ Награда получена! Новый баланс: ${userData.balance}`
+			messageElement.className = 'reward-message success'
+			setTimeout(() => {
+				messageElement.textContent = ''
+			}, 5000)
+		}
+		
+		// Убираем параметр из URL
+		const newUrl = window.location.pathname + '?user_id=' + userData.user_id + '&balance=' + userData.balance
+		window.history.replaceState({}, '', newUrl)
+	}
+}
+
 // Загрузка данных пользователя
 function loadUserData() {
 	const urlParams = new URLSearchParams(window.location.search)
@@ -604,8 +695,8 @@ function loadUserData() {
 	const today = new Date().toISOString().split('T')[0]
 	userData.rewardAvailable = !userData.rewards[today]
 
-	// Запрашиваем актуальный баланс при загрузке
-	setTimeout(refreshBalance, 1000)
+	// Обновляем интерфейс
+	refreshAllData()
 }
 
 // Инициализация Telegram Web App
@@ -671,87 +762,6 @@ document.addEventListener('DOMContentLoaded', function () {
 	// Устанавливаем способ оплаты по умолчанию как выбранный
 	selectPaymentMethod('sbp')
 
-	// Добавляем кнопку для принудительной синхронизации баланса (для отладки)
-	if (!window.Telegram || !Telegram.WebApp) {
-		const syncButton = document.createElement('button')
-		syncButton.textContent = '🔄 Синхронизировать баланс'
-		syncButton.className = 'btn btn-primary'
-		syncButton.style.marginTop = '10px'
-		syncButton.onclick = function () {
-			const currentBalance = parseInt(
-				document.getElementById('balanceAmount').textContent
-			)
-			const newBalance = currentBalance + 1
-			updateBalanceDisplay(newBalance)
-			userData.balance = newBalance
-			alert('Баланс синхронизирован (тестовый режим)')
-		}
-		document.querySelector('.balance-card').appendChild(syncButton)
-	}
+	// Автоматическое обновление при загрузке
+	refreshAllData()
 })
-// Функция для получения актуального баланса
-function refreshBalance() {
-    if (window.Telegram && Telegram.WebApp) {
-        Telegram.WebApp.sendData(
-            JSON.stringify({
-                action: 'get_balance',
-            })
-        )
-    } else {
-        // Для тестирования без Telegram
-        console.log('Запрос баланса (тестовый режим)')
-    }
-}
-
-// Функция для обработки успешного получения награды
-function handleRewardClaimSuccess(data) {
-    // Обновляем баланс
-    userData.balance = data.new_balance
-    updateBalanceDisplay()
-    
-    // Обновляем состояние награды
-    const today = new Date().toISOString().split('T')[0]
-    userData.rewards[today] = true
-    userData.rewardAvailable = false
-    
-    // Сохраняем в localStorage
-    localStorage.setItem('dailyRewards', JSON.stringify(userData.rewards))
-    
-    // Обновляем интерфейс
-    updateRewardsStats()
-    updateRewardButton()
-    initializeCalendar() // Перерисовываем календарь
-    
-    // Показываем сообщение об успехе
-    const messageElement = document.getElementById('rewardMessage')
-    if (messageElement) {
-        messageElement.textContent = `✅ Получено ${data.reward_amount} сообщение! Новый баланс: ${data.new_balance}`
-        messageElement.className = 'reward-message success'
-        
-        setTimeout(() => {
-            messageElement.textContent = ''
-        }, 3000)
-    }
-}
-
-// Обновите функцию claimDailyReward
-function claimDailyReward(dateKey) {
-    if (window.Telegram && Telegram.WebApp) {
-        Telegram.WebApp.sendData(
-            JSON.stringify({
-                action: 'claim_daily_reward',
-                date: dateKey,
-            })
-        )
-        
-        // Показываем сообщение о обработке
-        const messageElement = document.getElementById('rewardMessage')
-        if (messageElement) {
-            messageElement.textContent = '🔄 Получаем награду...'
-            messageElement.className = 'reward-message'
-        }
-    } else {
-        // Режим тестирования в браузере
-        simulateRewardClaim(dateKey)
-    }
-}
