@@ -361,6 +361,7 @@ function handleBotData(data) {
 				userData.balance = parsedData.balance
 				updateBalanceDisplay()
 				updateRewardsStats()
+				console.log(`💰 Баланс получен от бота: ${parsedData.balance}`)
 				break
 			case 'reward_claimed_success':
 				handleRewardClaimSuccess(parsedData)
@@ -490,6 +491,13 @@ function claimDailyReward(dateKey) {
 			messageElement.textContent = '🔄 Получаем награду...'
 			messageElement.className = 'reward-message'
 		}
+		
+		// Блокируем кнопку чтобы избежать повторных нажатий
+		const claimButton = document.getElementById('claimRewardBtn')
+		if (claimButton) {
+			claimButton.disabled = true
+			claimButton.textContent = '🔄 Получаем награду...'
+		}
 
 		// Отправляем запрос на получение награды
 		Telegram.WebApp.sendData(
@@ -498,11 +506,10 @@ function claimDailyReward(dateKey) {
 				date: dateKey,
 			})
 		)
-
-		// Закрываем веб-приложение через 2 секунды для синхронизации
-		setTimeout(() => {
-			Telegram.WebApp.close()
-		}, 2000)
+		
+		// НЕ закрываем веб-приложение - ждем ответа от бота
+		// Пользователь увидит сообщение в чате и сможет обновить через кнопку
+		
 	} else {
 		// Режим тестирования в браузере
 		simulateRewardClaim(dateKey)
@@ -642,12 +649,24 @@ function refreshAllData() {
 	const urlParams = new URLSearchParams(window.location.search)
 	const balance = urlParams.get('balance')
 	const rewardClaimed = urlParams.get('reward_claimed')
+	const user_id = urlParams.get('user_id')
 	
-	if (balance) {
-		userData.balance = parseInt(balance)
-		updateBalanceDisplay()
+	// Обновляем user_id если передан
+	if (user_id) {
+		userData.user_id = user_id
 	}
 	
+	// Обновляем баланс если передан
+	if (balance) {
+		const newBalance = parseInt(balance)
+		if (newBalance !== userData.balance) {
+			userData.balance = newBalance
+			updateBalanceDisplay()
+			console.log(`💰 Баланс обновлен: ${userData.balance}`)
+		}
+	}
+	
+	// Обрабатываем получение награды
 	if (rewardClaimed === 'true') {
 		// Обновляем состояние награды
 		const today = new Date().toISOString().split('T')[0]
@@ -670,9 +689,22 @@ function refreshAllData() {
 			}, 5000)
 		}
 		
-		// Убираем параметр из URL
-		const newUrl = window.location.pathname + '?user_id=' + userData.user_id + '&balance=' + userData.balance
-		window.history.replaceState({}, '', newUrl)
+		// Убираем параметр из URL чтобы избежать повторной обработки
+		const cleanUrl = window.location.pathname + '?user_id=' + userData.user_id + '&balance=' + userData.balance
+		window.history.replaceState({}, '', cleanUrl)
+		
+		console.log('🎁 Награда обработана, интерфейс обновлен')
+	}
+	
+	// Всегда запрашиваем актуальный баланс у бота
+	if (window.Telegram && Telegram.WebApp) {
+		setTimeout(() => {
+			Telegram.WebApp.sendData(
+				JSON.stringify({
+					action: 'get_balance',
+				})
+			)
+		}, 1000)
 	}
 }
 
@@ -762,6 +794,17 @@ document.addEventListener('DOMContentLoaded', function () {
 	// Устанавливаем способ оплаты по умолчанию как выбранный
 	selectPaymentMethod('sbp')
 
-	// Автоматическое обновление при загрузке
-	refreshAllData()
+	// Принудительное обновление данных при загрузке
+	setTimeout(refreshAllData, 500)
+	
+	// Дополнительное обновление через 3 секунды на случай если параметры не пришли
+	setTimeout(() => {
+		if (window.Telegram && Telegram.WebApp) {
+			Telegram.WebApp.sendData(
+				JSON.stringify({
+					action: 'get_balance',
+				})
+			)
+		}
+	}, 3000)
 })
